@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // Sin 'React' al principio
+import { useState, useEffect, useCallback } from 'react'; 
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import api from '../../../services/api'; 
