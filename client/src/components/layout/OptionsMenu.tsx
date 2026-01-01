@@ -1,5 +1,4 @@
-import React from 'react';
-import { Sun, Moon, LogOut } from 'lucide-react';
+import { Sun, LogOut } from 'lucide-react'; // Se eliminó 'Moon'
 import { useAuth } from '../../context/AuthContext';
 import styles from './OptionsMenu.module.css';
 

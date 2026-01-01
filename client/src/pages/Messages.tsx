@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, FormEvent } from 'react'; // Se eliminó 'React' y se agregó 'FormEvent'
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { ImageIcon, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // Sin 'React' al principio
 import { Search as SearchIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
