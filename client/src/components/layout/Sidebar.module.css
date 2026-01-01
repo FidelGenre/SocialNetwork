@@ -1,0 +1,76 @@
+.sidebar {
+  width: 76px;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background-color: var(--bg-color); /* Ahora cambia a blanco */
+  border-right: 1px solid var(--border-main);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  /* Subida masiva del botón */
+  padding: 120px 0 140px 0; 
+  z-index: 1000;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.item {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.item:hover, .active {
+  color: var(--text-primary);
+}
+
+.bottomSection {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.menuBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 12px;
+  transition: color 0.2s ease;
+}
+
+.menuBtn:hover {
+  color: var(--text-primary);
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.logoImage {
+  width: 30px;      /* Ajusta el tamaño a tu gusto */
+  height: auto;     /* Mantiene la proporción */
+  object-fit: contain;
+  /* Si tu logo es blanco y el fondo negro, puedes usar filter si es necesario */
+  /* filter: brightness(0) invert(1); */ 
+}
+

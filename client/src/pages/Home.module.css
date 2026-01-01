@@ -1,0 +1,90 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: var(--bg-color);
+}
+
+.header {
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-color); 
+  border-bottom: 1px solid var(--border-main);
+  z-index: 100;
+}
+
+.selectorWrapper {
+  position: relative;
+}
+
+.feedSelector {
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-main);
+  border-radius: 14px;
+  padding: 6px;
+  width: 160px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+}
+
+.dropdown button {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  text-align: left;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.editorSection {
+  border-bottom: 1px solid var(--border-main);
+}
+
+/* BOTÓN CUADRADO REDONDEADO */
+.floatingAddBtn {
+  position: fixed;
+  bottom: 40px; /* Elevado para evitar la barra de tareas */
+  right: 40px;
+  width: 56px;
+  height: 56px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-main);
+  border-radius: 12px; /* Estilo cuadrado redondeado */
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.floatingAddBtn:hover {
+  background-color: var(--border-main);
+  transform: scale(1.05);
+}

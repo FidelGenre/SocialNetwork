@@ -1,0 +1,116 @@
+.container {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: var(--bg-color);
+  box-sizing: border-box; /* Evita que el contenedor se salga */
+}
+
+.title {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-main);
+  border-radius: 16px;
+  padding: 14px 18px;
+  gap: 12px;
+  box-sizing: border-box; /* Evita que el input se salga */
+}
+
+.input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  outline: none;
+  font-size: 16px;
+  width: 100%; /* Asegura que respete el contenedor */
+}
+
+.searchIcon {
+  color: var(--text-secondary);
+}
+
+.resultsList {
+  margin-top: 24px;
+}
+
+/* Diseño de tarjeta tipo Threads */
+.userRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-main);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.userRow:hover {
+  background-color: var(--bg-secondary);
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarMini {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+}
+
+.displayName {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.username {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.viewBtn {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  border: 1px solid var(--border-main);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.viewBtn:hover {
+  background-color: var(--text-primary);
+  color: var(--bg-color);
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-top: 60px;
+}

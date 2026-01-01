@@ -1,0 +1,93 @@
+/* src/pages/Login.module.css */
+.container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Fondo dinámico para toda la pantalla de login */
+  background-color: var(--bg-color);
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  /* El fondo de la tarjeta ahora es el color secundario del tema */
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-main);
+  border-radius: 28px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-size: 50px;
+  /* El logo cambia de blanco a negro automáticamente */
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.card h2 {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; 
+}
+
+.input {
+  /* Los campos de texto ahora son blancos en modo claro */
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-main);
+  border-radius: 14px;
+  padding: 18px;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--text-secondary);
+}
+
+.loginBtn {
+  /* Botón de alto contraste: Negro en fondo blanco, Blanco en fondo negro */
+  background-color: var(--text-primary);
+  color: var(--bg-color);
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.loginBtn:active {
+  transform: scale(0.98);
+}
+
+.footer {
+  margin-top: 32px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.footer a {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 5px;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}

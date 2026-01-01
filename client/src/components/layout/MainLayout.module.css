@@ -1,0 +1,57 @@
+/* src/components/layout/MainLayout.module.css */
+.container {
+  /* Ahora el fondo principal cambia con el modo de apariencia */
+  background-color: var(--bg-color); 
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  transition: background-color 0.3s ease; /* Cambio suave de negro a blanco */
+}
+
+.mainContent {
+  width: 100%;
+  padding-top: 20px; 
+  margin-left: 80px; 
+  display: flex;
+  justify-content: center;
+  background-color: var(--bg-color); /* Asegura que el fondo sea dinámico */
+}
+
+.mainContentWrapper {
+  width: 100%;
+  max-width: 620px;
+  margin-left: 76px; 
+  padding: 30px 16px 10px 16px; 
+  background-color: var(--bg-color); /* Evita zonas negras residuales */
+}
+
+.leftColumn {
+  width: 76px;
+  position: fixed; 
+  left: 0;
+  top: 0;
+  height: 100vh;
+  /* Borde dinámico que se aclara en modo blanco */
+  border-right: 1px solid var(--border-main); 
+  z-index: 100;
+  background-color: var(--bg-color);
+}
+
+.centerColumn {
+  width: 100%;
+  max-width: 620px; 
+  margin-left: 72px;
+  padding: 40px 16px;
+  background-color: var(--bg-color);
+}
+
+.rightColumn {
+  display: none; 
+}
+
+.feedContainer {
+  width: 100%;
+  max-width: 620px; 
+  padding: 40px 20px; 
+  background-color: var(--bg-color); /* El feed ahora se blanquea por completo */
+}

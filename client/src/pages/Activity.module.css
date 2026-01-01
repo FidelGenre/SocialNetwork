@@ -1,0 +1,109 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  /* Fondo dinámico para toda la sección */
+  background-color: var(--bg-color); 
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary); /* Blanco o Negro según el tema */
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+/* Botones de filtro dinámicos */
+.filterBtn, .activeFilter { 
+  padding: 8px 24px; 
+  border-radius: 10px; 
+  border: 1px solid var(--border-main); 
+  cursor: pointer; 
+  font-weight: 600; 
+  font-size: 15px; 
+  transition: all 0.2s;
+}
+
+.filterBtn { 
+  background: none; 
+  color: var(--text-primary); 
+}
+
+.filterBtn:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* El filtro activo invierte colores para resaltar */
+.activeFilter { 
+  background-color: var(--text-primary); 
+  color: var(--bg-color); 
+  border-color: var(--text-primary); 
+}
+
+.item { 
+  display: flex; 
+  gap: 16px; 
+  padding: 16px 0; 
+  border-bottom: 1px solid var(--border-main); 
+  align-items: flex-start; 
+  transition: background-color 0.2s;
+}
+
+.item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.avatar { 
+  position: relative; 
+  width: 44px; 
+  height: 44px; 
+  background-color: var(--bg-secondary); 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-weight: bold; 
+  flex-shrink: 0; 
+  color: var(--text-primary);
+}
+
+.badge { 
+  position: absolute; 
+  bottom: -2px; 
+  right: -2px; 
+  background-color: var(--bg-color); /* Crea el efecto de recorte circular */
+  border-radius: 50%; 
+  padding: 4px; 
+  display: flex; 
+}
+
+.content { 
+  flex: 1; 
+}
+
+.text { 
+  color: var(--text-primary); 
+  margin: 0; 
+  font-size: 15px; 
+}
+
+.preview { 
+  color: var(--text-secondary); 
+  font-size: 14px; 
+  display: block; 
+  margin-top: 4px; 
+}
+
+.empty { 
+  text-align: center; 
+  color: var(--text-secondary); 
+  margin-top: 40px; 
+}
