@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, MoreHorizontal, Image as ImageIcon, Send } from 'lucide-react';
+import { useState, useEffect, useRef, FormEvent } from 'react'; // Se eliminó 'React' y se agregó 'FormEvent'
+import { ImageIcon, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -15,7 +15,6 @@ export const Messages = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [newMessage, setNewMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const BASE_URL = 'http://localhost:8080';
 
@@ -24,6 +23,7 @@ export const Messages = () => {
     return path.startsWith('http') ? path : `${BASE_URL}${path}`;
   };
 
+  // Carga de contactos y notificaciones
   useEffect(() => {
     if (currentUser) {
       const fetchData = async () => {
@@ -40,6 +40,7 @@ export const Messages = () => {
     }
   }, [currentUser]);
 
+  // Carga de la conversación activa
   useEffect(() => {
     if (urlUsername && currentUser) {
       const fetchChat = async () => {
@@ -59,7 +60,8 @@ export const Messages = () => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  // Se usa FormEvent directamente en lugar de React.FormEvent
+  const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !urlUsername || !currentUser) return;
     try {
@@ -71,22 +73,23 @@ export const Messages = () => {
     } catch (e) { console.error(e); }
   };
 
-  const filteredContacts = contacts.filter(c =>
-    (c.displayName || c.username).toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className={styles.container}>
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <h2 className={styles.sidebarTitle}>Chat</h2>
-          {/* SE QUITARON LOS ICONOS DE AJUSTES Y EDITAR AQUÍ */}
         </div>
         <div className={styles.contactList}>
           {contacts.map((contact) => (
-            <div key={contact.username} className={`${styles.contactItem} ${urlUsername === contact.username ? styles.activeContact : ''}`} onClick={() => navigate(`/messages/${contact.username}`)}>
+            <div 
+              key={contact.username} 
+              className={`${styles.contactItem} ${urlUsername === contact.username ? styles.activeContact : ''}`} 
+              onClick={() => navigate(`/messages/${contact.username}`)}
+            >
               <div className={styles.avatarContainer}>
-                <div className={styles.avatarPlaceholder}>{contact.username[0].toUpperCase()}</div>
+                <div className={styles.avatarPlaceholder}>
+                  {(contact.displayName || contact.username)[0].toUpperCase()}
+                </div>
                 {unreadCounts[contact.username] > 0 && urlUsername !== contact.username && (
                   <div className={styles.unreadBadge}>{unreadCounts[contact.username]}</div>
                 )}
@@ -107,7 +110,6 @@ export const Messages = () => {
                 <span className={styles.headerName}>{urlUsername}</span>
                 <span className={styles.headerStatus}>En línea</span>
               </div>
-              {/* SE QUITARON LOS 3 PUNTITOS AQUÍ */}
             </div>
 
             <div className={styles.messageList} ref={scrollRef}>
@@ -119,7 +121,7 @@ export const Messages = () => {
                     {m.sharedPost && (
                       <div className={styles.sharedPostCard} onClick={() => navigate(`/post/${m.sharedPost.id}`)}>
                         <div className={styles.previewHeader}>
-                          <div className={styles.miniAvatar}>{m.sharedPost.user.displayName[0].toUpperCase()}</div>
+                          <div className={styles.miniAvatar}>{(m.sharedPost.user.displayName || 'U')[0].toUpperCase()}</div>
                           <span className={styles.previewDisplayName}>{m.sharedPost.user.displayName}</span>
                           <span className={styles.previewUsername}>@{m.sharedPost.user.username}</span>
                         </div>

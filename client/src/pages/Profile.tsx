@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Se eliminó 'React' para evitar TS6133
 import { MoreHorizontal, LogOut, MessageSquare } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -20,9 +20,9 @@ export const Profile = () => {
 
   const isOwnProfile = currentUser?.username === profileUsername;
 
-  // Función para obtener la URL completa del servidor para el avatar
-  const getFullAvatarUrl = (url: string | undefined) => {
-    if (!url) return null;
+  // SOLUCIÓN TS2322: Cambiamos 'null' por 'undefined' para que sea compatible con el prop 'src'
+  const getFullAvatarUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined; 
     if (url.startsWith('http') || url.startsWith('blob')) return url;
     return `http://localhost:8080${url}`;
   };
@@ -151,8 +151,6 @@ export const Profile = () => {
           </>
         )}
       </div>
-
-      {/* Se eliminó el PostEditor de esta sección */}
 
       <nav className={styles.tabs}>
         {['Threads', 'Replies', 'Media', 'Reposts'].map((tab) => (
