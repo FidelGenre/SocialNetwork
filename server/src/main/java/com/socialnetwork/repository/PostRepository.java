@@ -9,30 +9,28 @@ import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // 1. FEED PRINCIPAL: Obtiene todos los posts raíz (que no son respuestas)
+    // 1. FEED PRINCIPAL
     List<Post> findAllByParentPostIsNullOrderByCreatedAtDesc();
 
-    // 2. PERFIL - THREADS: Posts propios que son el inicio de un hilo
+    // 2. PERFIL - THREADS
     List<Post> findByUserUsernameAndParentPostIsNullOrderByCreatedAtDesc(String username);
 
-    // 3. PERFIL - REPLIES: Posts propios que son respuestas a otros posts
+    // 3. PERFIL - REPLIES
     List<Post> findByUserUsernameAndParentPostIsNotNullOrderByCreatedAtDesc(String username);
 
-    // 4. PERFIL - REPOSTS: Listado de posts que el usuario ha compartido (retweets)
+    // 4. PERFIL - REPOSTS
     List<Post> findByUserUsernameAndOriginalPostIdIsNotNullOrderByCreatedAtDesc(String username);
 
-    // 5. FEED PERSONALIZADO: Posts de una lista de usuarios seguidos
+    // 5. FEED PERSONALIZADO
     List<Post> findByUserInAndParentPostIsNullOrderByCreatedAtDesc(List<User> users);
 
-    // 6. HILOS: Obtener todas las respuestas directas de un post por su ID
+    // 6. HILOS
     List<Post> findByParentPostIdOrderByCreatedAtDesc(Long parentId);
 
-    // --- MÉTODOS PARA INTEGRIDAD REFERENCIAL (BORRADO) ---
+    // 7. NUEVO: Buscar reposts específicos de un usuario (Para el Toggle)
+    List<Post> findByUserAndOriginalPostId(User user, Long originalPostId);
 
-    // A. Encuentra todas las respuestas asociadas a un objeto Post específico
+    // --- MÉTODOS PARA INTEGRIDAD REFERENCIAL ---
     List<Post> findByParentPost(Post post);
-
-    // B. NUEVO: Encuentra todos los reposts que apuntan a un ID de post original
-    // Esencial para borrar los reposts cuando se elimina el post fuente
     List<Post> findByOriginalPostId(Long originalPostId);
 }

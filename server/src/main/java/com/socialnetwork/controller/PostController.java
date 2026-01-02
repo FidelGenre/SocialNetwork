@@ -134,57 +134,56 @@ public class PostController {
         return ResponseEntity.notFound().build();
     }
 
-    // 5. REPOST (CON LÓGICA TOGGLE MEJORADA)
+    // 5. REPOST (Lógica de Toggle y Limpieza de Duplicados)
     @PostMapping("/{id}/repost")
     @Transactional
     public ResponseEntity<?> repostPost(@PathVariable("id") Long id, @RequestParam("username") String username) {
-        Optional<Post> postClickedOpt = postRepository.findById(id);
-        Optional<User> userWhoRepostsOpt = userRepository.findByUsername(username);
+        Post postClicked = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post no encontrado"));
+        User me = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        if (postClickedOpt.isPresent() && userWhoRepostsOpt.isPresent()) {
-            Post postClicked = postClickedOpt.get();
-            User me = userWhoRepostsOpt.get();
+        // Identificamos el post fuente real
+        Long targetOriginalId = (postClicked.getOriginalPostId() != null) 
+                                ? postClicked.getOriginalPostId() 
+                                : postClicked.getId();
 
-            // Lógica clave: Determinar el ID del post original real
-            // Si el post que toqué ya es un repost, necesito el ID del que lo originó.
-            Long originalPostId = (postClicked.getOriginalPostId() != null) 
-                                  ? postClicked.getOriginalPostId() 
-                                  : postClicked.getId();
+        Post originalPost = postRepository.findById(targetOriginalId)
+                .orElseThrow(() -> new RuntimeException("Post original no encontrado"));
 
-            Post originalPost = postRepository.findById(originalPostId)
-                    .orElseThrow(() -> new RuntimeException("Post original no encontrado"));
+        // Buscamos todos los reposts del usuario para este post específico
+        List<Post> existingReposts = postRepository.findByUserAndOriginalPostId(me, targetOriginalId);
 
-            // Buscamos si YO ya tengo un repost de ese post original
-            Optional<Post> existingRepost = postRepository.findAll().stream()
-                .filter(p -> p.getUser().getId().equals(me.getId()) && originalPostId.equals(p.getOriginalPostId()))
-                .findFirst();
+        if (!existingReposts.isEmpty()) {
+            // SI EXISTE -> TOGGLE OFF (Limpieza masiva de duplicados)
+            postRepository.deleteAll(existingReposts);
+            
+            // Actualizamos contador del post original restando 1
+            int currentCount = originalPost.getRepostsCount() != null ? originalPost.getRepostsCount() : 0;
+            originalPost.setRepostsCount(Math.max(0, currentCount - 1));
+            postRepository.save(originalPost);
+            
+            return ResponseEntity.ok(Map.of("action", "deleted", "message", "Repost eliminado"));
+        } else {
+            // SI NO EXISTE -> TOGGLE ON
+            Post repost = new Post();
+            repost.setContent(originalPost.getContent());
+            repost.setImageUrl(originalPost.getImageUrl());
+            repost.setUser(me); 
+            repost.setCreatedAt(LocalDateTime.now());
+            repost.setRepostFromUserName(me.getDisplayName() != null ? me.getDisplayName() : me.getUsername()); 
+            repost.setOriginalPostId(originalPost.getId());
 
-            if (existingRepost.isPresent()) {
-                // SI YA EXISTE -> LO QUITAMOS (Un-repost)
-                postRepository.delete(existingRepost.get());
-                originalPost.setRepostsCount(Math.max(0, originalPost.getRepostsCount() - 1));
-                postRepository.save(originalPost);
-                return ResponseEntity.ok(Map.of("action", "deleted", "message", "Repost eliminado"));
-            } else {
-                // SI NO EXISTE -> LO CREAMOS
-                Post repost = new Post();
-                repost.setContent(originalPost.getContent());
-                repost.setImageUrl(originalPost.getImageUrl());
-                repost.setUser(me); 
-                repost.setCreatedAt(LocalDateTime.now());
-                repost.setRepostFromUserName(me.getDisplayName()); 
-                repost.setOriginalPostId(originalPost.getId());
-
-                originalPost.setRepostsCount(originalPost.getRepostsCount() + 1);
-                
-                postRepository.save(originalPost);
-                postRepository.save(repost);
-                
-                createActivity("REPOST", me, originalPost.getUser(), originalPost);
-                return ResponseEntity.ok(Map.of("action", "created", "message", "Repost creado"));
-            }
+            // Incrementamos contador del original
+            int currentCount = originalPost.getRepostsCount() != null ? originalPost.getRepostsCount() : 0;
+            originalPost.setRepostsCount(currentCount + 1);
+            
+            postRepository.save(originalPost);
+            postRepository.save(repost);
+            
+            createActivity("REPOST", me, originalPost.getUser(), originalPost);
+            return ResponseEntity.ok(Map.of("action", "created", "message", "Repost creado"));
         }
-        return ResponseEntity.notFound().build();
     }
 
     // 6. COMPARTIR EN CHAT
