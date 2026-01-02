@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react';
 import { ImageIcon, Send, ChevronLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,6 @@ export const Messages = () => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [newMessage, setNewMessage] = useState('');
 
-  // Cambiado para que apunte a tu servidor real en Render
   const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
   const getFullImageUrl = (path: string) => {
@@ -24,107 +23,109 @@ export const Messages = () => {
     return path.startsWith('http') ? path : `${BASE_URL}${path}`;
   };
 
-  // 1. Carga de contactos y notificaciones
-  useEffect(() => {
-    if (currentUser) {
-      const fetchData = async () => {
-        try {
-          const resContacts = await api.get(`/messages/contacts/${currentUser.username}`);
-          setContacts(resContacts.data);
-          const resCounts = await api.get(`/messages/unread-counts/${currentUser.username}`);
-          setUnreadCounts(resCounts.data);
-        } catch (err) { console.error("Error cargando contactos:", err); }
-      };
-      fetchData();
-      const interval = setInterval(fetchData, 5000); 
-      return () => clearInterval(interval);
-    }
+  // --- CARGA DE DATOS ---
+
+  const fetchContactsData = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const resContacts = await api.get(`/messages/contacts/${currentUser.username}`);
+      setContacts(resContacts.data);
+      const resCounts = await api.get(`/messages/unread-counts/${currentUser.username}`);
+      setUnreadCounts(resCounts.data);
+    } catch (err) { console.error("Error cargando contactos:", err); }
   }, [currentUser]);
 
-  // 2. Carga de la conversación activa y marcado como leído
-  useEffect(() => {
-    if (urlUsername && currentUser) {
-      const fetchChat = async () => {
-        try {
-          const res = await api.get(`/messages/conversation?user1=${currentUser.username}&user2=${urlUsername}`);
-          setMessages(res.data);
-          // Marca mensajes como leídos al entrar al chat
-          await api.patch(`/messages/read?username=${currentUser.username}&from=${urlUsername}`);
-        } catch (e) { console.error("Error cargando chat:", e); }
-      };
-      fetchChat();
-      const interval = setInterval(fetchChat, 4000);
-      return () => clearInterval(interval);
-    } else {
-      setMessages([]); // Limpiar mensajes si no hay usuario seleccionado
-    }
+  const fetchChat = useCallback(async () => {
+    if (!urlUsername || !currentUser) return;
+    try {
+      const res = await api.get(`/messages/conversation?user1=${currentUser.username}&user2=${urlUsername}`);
+      setMessages(res.data);
+      await api.patch(`/messages/read?username=${currentUser.username}&from=${urlUsername}`);
+    } catch (e) { console.error("Error cargando chat:", e); }
   }, [urlUsername, currentUser]);
 
-  // 3. Auto-scroll al fondo cuando hay nuevos mensajes
+  // --- EFECTOS (Polling para tiempo real) ---
+
+  useEffect(() => {
+    fetchContactsData();
+    const interval = setInterval(fetchContactsData, 5000); 
+    return () => clearInterval(interval);
+  }, [fetchContactsData]);
+
+  useEffect(() => {
+    if (urlUsername && currentUser) {
+      fetchChat();
+      const interval = setInterval(fetchChat, 3000); // Polling rápido para el chat activo
+      return () => clearInterval(interval);
+    }
+  }, [fetchChat, urlUsername, currentUser]);
+
+  // Auto-scroll al fondo
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
+  // --- ACCIONES ---
+
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !urlUsername || !currentUser) return;
+    const content = newMessage.trim();
+    if (!content || !urlUsername || !currentUser) return;
+
+    setNewMessage(''); // Limpieza inmediata del input
     try {
       await api.post(`/messages/send?from=${currentUser.username}&to=${urlUsername}`, 
-        newMessage.trim(), { headers: { 'Content-Type': 'text/plain' } });
-      setNewMessage('');
-      // Actualización inmediata del chat tras enviar
-      const res = await api.get(`/messages/conversation?user1=${currentUser.username}&user2=${urlUsername}`);
-      setMessages(res.data);
-    } catch (e) { console.error("Error enviando mensaje:", e); }
+        content, { headers: { 'Content-Type': 'text/plain' } });
+      
+      // Actualización inmediata post-envío
+      fetchChat();
+      fetchContactsData();
+    } catch (e) { 
+      console.error("Error enviando mensaje:", e);
+      setNewMessage(content); 
+    }
   };
 
   return (
-    /* Clase dinámica 'chatOpen' para controlar la visibilidad en móviles */
     <div className={`${styles.container} ${urlUsername ? styles.chatOpen : ''}`}>
       
-      {/* SIDEBAR: Lista de chats */}
+      {/* SIDEBAR */}
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <h2 className={styles.sidebarTitle}>Mensajes</h2>
         </div>
         <div className={styles.contactList}>
-          {contacts.length > 0 ? (
-            contacts.map((contact) => (
-              <div 
-                key={contact.username} 
-                className={`${styles.contactItem} ${urlUsername === contact.username ? styles.activeContact : ''}`} 
-                onClick={() => navigate(`/messages/${contact.username}`)}
-              >
-                <div className={styles.avatarContainer}>
-                  <div className={styles.avatarPlaceholder}>
-                    {(contact.displayName || contact.username)[0].toUpperCase()}
-                  </div>
-                  {/* Badge de mensajes no leídos */}
-                  {unreadCounts[contact.username] > 0 && urlUsername !== contact.username && (
-                    <div className={styles.unreadBadge}>{unreadCounts[contact.username]}</div>
-                  )}
+          {contacts.map((contact) => (
+            <div 
+              key={contact.username} 
+              className={`${styles.contactItem} ${urlUsername === contact.username ? styles.activeContact : ''}`} 
+              onClick={() => navigate(`/messages/${contact.username}`)}
+            >
+              <div className={styles.avatarContainer}>
+                <div className={styles.avatarPlaceholder}>
+                  {(contact.displayName || contact.username)[0].toUpperCase()}
                 </div>
-                <div className={styles.contactInfo}>
-                  <div className={styles.contactName}>{contact.displayName || contact.username}</div>
-                  <div className={styles.lastMessage}>Haz clic para chatear</div>
-                </div>
+                {unreadCounts[contact.username] > 0 && urlUsername !== contact.username && (
+                  <div className={styles.unreadBadge}>{unreadCounts[contact.username]}</div>
+                )}
               </div>
-            ))
-          ) : (
-            <div className={styles.emptyState}><p>No tienes chats aún.</p></div>
-          )}
+              <div className={styles.contactInfo}>
+                <div className={styles.contactName}>{contact.displayName || contact.username}</div>
+                <div className={styles.lastMessage}>Haz clic para chatear</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* CHAT AREA: Visualización del mensaje seleccionado */}
+      {/* ÁREA DE CHAT */}
       <div className={styles.chatArea}>
         {urlUsername ? (
           <>
             <div className={styles.chatHeader}>
               <div className={styles.headerLeft}>
-                {/* Botón Volver: Solo visible en móvil vía CSS */}
                 <button className={styles.backBtn} onClick={() => navigate('/messages')}>
                   <ChevronLeft size={24} />
                 </button>
@@ -137,17 +138,22 @@ export const Messages = () => {
 
             <div className={styles.messageList} ref={scrollRef}>
               {messages.map(m => (
-                <div key={m.id} className={`${styles.messageRow} ${m.sender.username === currentUser?.username ? styles.myMessageRow : styles.theirMessageRow}`}>
+                <div 
+                  key={m.id} 
+                  className={`${styles.messageRow} ${m.sender.username === currentUser?.username ? styles.myMessageRow : styles.theirMessageRow}`}
+                >
                   <div className={`${styles.messageBubble} ${m.sender.username === currentUser?.username ? styles.myBubble : styles.theirBubble}`}>
                     <div className={styles.msgContent}>{m.content}</div>
 
-                    {/* Renderizado de Post Compartido si existe */}
+                    {/* --- AQUÍ SE RESTAURA EL POST COMPARTIDO --- */}
                     {m.sharedPost && (
                       <div className={styles.sharedPostCard} onClick={() => navigate(`/post/${m.sharedPost.id}`)}>
                         <div className={styles.previewHeader}>
-                          <div className={styles.miniAvatar}>{(m.sharedPost.user.displayName || 'U')[0].toUpperCase()}</div>
-                          <span className={styles.previewDisplayName}>{m.sharedPost.user.displayName}</span>
-                          <span className={styles.previewUsername}>@{m.sharedPost.user.username}</span>
+                          <div className={styles.miniAvatar}>
+                            {(m.sharedPost.user?.displayName || m.sharedPost.user?.username || 'U')[0].toUpperCase()}
+                          </div>
+                          <span className={styles.previewDisplayName}>{m.sharedPost.user?.displayName}</span>
+                          <span className={styles.previewUsername}>@{m.sharedPost.user?.username}</span>
                         </div>
                         <p className={styles.previewText}>{m.sharedPost.content}</p>
                         {m.sharedPost.imageUrl && (

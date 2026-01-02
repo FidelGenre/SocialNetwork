@@ -91,3 +91,16 @@
 .footer a:hover {
   text-decoration: underline;
 }
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logoImage {
+  width: 40px;      /* Ajusta el ancho según tu logo */
+  height: 40px;     /* Ajusta el alto */
+  object-fit: contain; /* Evita que la imagen se deforme */
+  border-radius: 12px; /* Opcional: si quieres bordes redondeados */
+}

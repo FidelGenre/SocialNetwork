@@ -1,10 +1,16 @@
 .container {
-  max-width: 600px;
-  margin: 0 auto;
+  /* Eliminamos el max-width: 600px que bloqueaba todo */
+  width: 45vh !important;
+  max-width: 100% !important; 
+  margin: 0;
   background-color: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra el contenido si el layout es más ancho que los posts */
 }
 
 .header {
+  width: 100%; /* El header ahora ocupa todo el ancho */
   height: 60px;
   display: flex;
   justify-content: center;
@@ -61,27 +67,49 @@
 }
 
 .editorSection {
+  width: 100%;
+  /* Aquí puedes controlar el ancho máximo visual de la zona de escritura */
+  max-width: 100%; 
   border-bottom: 1px solid var(--border-main);
 }
 
-/* BOTÓN CUADRADO REDONDEADO */
+.feedList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra los posts dentro de la lista */
+}
+
+/* Forzamos que cada tarjeta de post ocupe el ancho disponible */
+.feedList > * {
+  width: 100% !important;
+}
+
+/* BOTÓN FLOTANTE */
 .floatingAddBtn {
   position: fixed;
-  bottom: 40px; /* Elevado para evitar la barra de tareas */
-  right: 40px;
+  bottom: 85px; 
+  right: 20px;
   width: 56px;
   height: 56px;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-main);
-  border-radius: 12px; /* Estilo cuadrado redondeado */
+  border-radius: 12px;
   color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 2100; 
   transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .floatingAddBtn {
+    bottom: 40px;
+    right: 40px;
+  }
 }
 
 .floatingAddBtn:hover {

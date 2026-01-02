@@ -1,57 +1,93 @@
-/* src/components/layout/MainLayout.module.css */
 .container {
-  /* Ahora el fondo principal cambia con el modo de apariencia */
   background-color: var(--bg-color); 
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  transition: background-color 0.3s ease; /* Cambio suave de negro a blanco */
+  transition: background-color 0.3s ease;
+  width: 100%;
 }
 
+/* --- MÓVIL: Ocupa todo el ancho --- */
 .mainContent {
-  width: 100%;
+  width:100%;
   padding-top: 20px; 
-  margin-left: 80px; 
+  margin-left: 0; /* En móvil NO hay margen */
   display: flex;
   justify-content: center;
-  background-color: var(--bg-color); /* Asegura que el fondo sea dinámico */
-}
-
-.mainContentWrapper {
-  width: 100%;
-  max-width: 620px;
-  margin-left: 76px; 
-  padding: 30px 16px 10px 16px; 
-  background-color: var(--bg-color); /* Evita zonas negras residuales */
+  background-color: var(--bg-color);
+  padding-bottom: 80px; /* Espacio para la barra de abajo */
 }
 
 .leftColumn {
-  width: 76px;
-  position: fixed; 
-  left: 0;
-  top: 0;
-  height: 100vh;
-  /* Borde dinámico que se aclara en modo blanco */
-  border-right: 1px solid var(--border-main); 
-  z-index: 100;
-  background-color: var(--bg-color);
+  /* En móvil la columna no ocupa espacio físico */
+  width: 0;
+  height: 0;
 }
 
 .centerColumn {
   width: 100%;
   max-width: 620px; 
-  margin-left: 72px;
-  padding: 40px 16px;
+  margin-left: 0; /* En móvil NO hay margen */
+  padding: 20px 16px;
   background-color: var(--bg-color);
 }
 
-.rightColumn {
-  display: none; 
+.floatingAddBtn {
+  position: fixed;
+  bottom: 85px; /* Ajustado para móvil sobre la barra */
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-main);
+  border-radius: 12px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 2100; /* Siempre por encima de todo */
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-.feedContainer {
-  width: 100%;
-  max-width: 620px; 
-  padding: 40px 20px; 
-  background-color: var(--bg-color); /* El feed ahora se blanquea por completo */
+/* --- ESCRITORIO: Aquí restauramos tu diseño original --- */
+@media (min-width: 768px) {
+  .mainContent {
+    margin-left: 80px; /* Restauramos tu margen */
+    padding-bottom: 0;
+  }
+
+  .leftColumn {
+    width: 76px;
+    position: fixed; 
+    left: 0;
+    top: 0;
+    height: 100vh;
+    border-right: 1px solid var(--border-main); 
+    z-index: 100;
+    background-color: var(--bg-color);
+    display: block;
+  }
+
+  .centerColumn {
+    margin-left: 72px; /* Restauramos tu margen lateral */
+    padding: 40px 16px;
+  }
+
+.floatingAddBtn {
+    bottom: 40px;
+    right: 40px;
+  }
+}
+
+.floatingAddBtn:hover {
+  background-color: var(--border-main);
+  transform: scale(1.05);
+}
+
+
+
+.rightColumn {
+  display: none; 
 }

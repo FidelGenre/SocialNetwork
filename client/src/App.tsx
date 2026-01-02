@@ -8,7 +8,7 @@ import { Search } from './pages/Search';
 import { Activity } from './pages/Activity';
 import { Messages } from './pages/Messages';
 import { PostView } from './features/posts/components/PostView.tsx'; // <--- Nueva importación
-import MainLayout from './components/layout/MainLayout';
+import { MainLayout } from './components/layout/MainLayout';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();

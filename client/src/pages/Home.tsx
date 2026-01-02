@@ -1,21 +1,28 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ChevronDown, Plus } from 'lucide-react'; // Importamos Plus
+import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PostEditor } from '../features/posts/components/PostEditor';
 import { PostCard } from '../features/posts/components/PostCard';
-import { CreatePostModal } from '../features/posts/components/CreatePostModal';
 import api from '../services/api';
 import styles from './Home.module.css';
 
-export const Home = () => {
+// Define una interfaz básica para tus posts según tu backend
+interface Post {
+  id: string;
+  content: string;
+  // Añade aquí los campos que devuelva tu API
+  [key: string]: any; 
+}
+
+export const Home: React.FC = () => {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [feedType, setFeedType] = useState<'Para ti' | 'Siguiendo'>('Para ti');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
   const fetchPosts = useCallback(async () => {
     try {
+      console.log("Sincronizando feed con el backend...");
       const url = feedType === 'Siguiendo' && user 
         ? `/posts?currentUser=${user.username}` 
         : '/posts';
@@ -27,7 +34,19 @@ export const Home = () => {
   }, [feedType, user]);
 
   useEffect(() => {
+    // Carga inicial
     fetchPosts();
+
+    // Listener para el evento disparado desde el Layout u otros componentes
+    const handleGlobalUpdate = () => {
+      fetchPosts();
+    };
+
+    window.addEventListener('postCreatedGlobal', handleGlobalUpdate);
+    
+    return () => {
+      window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
+    };
   }, [fetchPosts]);
 
   return (
@@ -52,23 +71,10 @@ export const Home = () => {
       </div>
 
       <div className={styles.feedList}>
-        {posts.map((post) => <PostCard key={post.id} {...post} />)}
+        {posts.map((post) => (
+          <PostCard key={post.id} {...post} />
+        ))}
       </div>
-
-      {/* BOTÓN RECTANGULAR CON ICONO + */}
-      <button 
-        className={styles.floatingAddBtn} 
-        onClick={() => setIsModalOpen(true)}
-      >
-        <Plus size={24} />
-      </button>
-
-      {isModalOpen && (
-        <CreatePostModal 
-          onClose={() => setIsModalOpen(false)} 
-          onPost={fetchPosts} 
-        />
-      )}
     </div>
   );
 };

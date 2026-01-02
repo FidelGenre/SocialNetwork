@@ -1,76 +1,81 @@
+/* --- BASE MÓVIL (Primero) --- */
 .sidebar {
-  width: 76px;
-  height: 100vh;
+  width: 100%;
+  height: 65px;
   position: fixed;
+  bottom: 0;
   left: 0;
-  top: 0;
-  background-color: var(--bg-color); /* Ahora cambia a blanco */
-  border-right: 1px solid var(--border-main);
+  background-color: var(--bg-color);
+  border-top: 1px solid var(--border-main);
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: row;
+  justify-content: space-around;
   align-items: center;
-  /* Subida masiva del botón */
-  padding: 120px 0 140px 0; 
   z-index: 1000;
+  padding: 0;
+}
+
+.topSection, .menuBtn {
+  display: none; /* Ocultos en móvil */
 }
 
 .navSection {
   display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
-.item {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  padding: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-.item:hover, .active {
-  color: var(--text-primary);
-}
-
-.bottomSection {
-  position: relative;
-  display: flex;
-  justify-content: center;
+  flex-direction: row;
   width: 100%;
-}
-
-.menuBtn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 12px;
-  transition: color 0.2s ease;
-}
-
-.menuBtn:hover {
-  color: var(--text-primary);
-}
-
-.logo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px 0;
+  justify-content: space-around;
 }
 
 .logoImage {
-  width: 30px;      /* Ajusta el tamaño a tu gusto */
-  height: auto;     /* Mantiene la proporción */
-  object-fit: contain;
-  /* Si tu logo es blanco y el fondo negro, puedes usar filter si es necesario */
-  /* filter: brightness(0) invert(1); */ 
+  width: 30px; /* Tamaño controlado para que no explote */
+  height: auto;
+}
+
+.item {
+  color: var(--text-secondary);
+  padding: 10px;
+  display: flex;
+  position: relative;
+}
+
+.active { color: var(--text-primary); }
+
+/* --- ESCRITORIO (Blindado) --- */
+@media (min-width: 768px) {
+  .sidebar {
+    width: 76px;
+    height: 100vh;
+    top: 0;
+    bottom: auto;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid var(--border-main);
+    border-top: none;
+    padding: 20px 0 40px 0; /* Ajuste de padding superior */
+  }
+
+  .topSection {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .navSection {
+    flex-direction: column;
+    gap: 25px;
+    width: auto;
+  }
+
+  .menuBtn {
+    display: flex;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .logoImage {
+    width: 32px; /* Tamaño pequeño y fijo para escritorio */
+  }
 }
 

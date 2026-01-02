@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api'; // Asegúrate de que la ruta sea correcta
 import styles from './Login.module.css'; // Usando tus estilos compartidos
+import logoImg from '../assets/box.png'; 
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -30,7 +31,13 @@ const Register: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <div className={styles.logo}>✦</div>
+        <div className={styles.logoContainer}>
+          <img 
+            src={logoImg}
+            alt="Logo App" 
+            className={styles.logoImage} 
+          />
+        </div>
         <h2>Crear cuenta en SocialNetwork</h2>
         
         {error && <p style={{ color: '#ff4444', marginBottom: '16px' }}>{error}</p>}

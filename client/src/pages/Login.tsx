@@ -3,6 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api'; 
 import { useAuth } from '../context/AuthContext';
 import styles from './Login.module.css';
+import logoImg from '../assets/box.png'; 
+// 1. Importa tu imagen si está en la carpeta assets
+// import logoImg from '../assets/logo.png'; 
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -16,7 +19,7 @@ const Login: React.FC = () => {
     setError('');
     try {
       const response = await api.post('/auth/login', { username, password });
-      login(response.data); // Guarda el usuario en el estado global
+      login(response.data); 
       navigate('/profile'); 
     } catch (err: any) {
       setError(err.response?.data || 'Credenciales inválidas');
@@ -26,15 +29,40 @@ const Login: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <div className={styles.logo}>✦</div>
+        {/* 2. Reemplazamos el ✦ por una imagen */}
+        <div className={styles.logoContainer}>
+          <img 
+            src={logoImg}
+            alt="Logo App" 
+            className={styles.logoImage} 
+          />
+        </div>
+
         <h2>Inicia sesión</h2>
         {error && <p style={{ color: '#ff4444', fontSize: '14px' }}>{error}</p>}
+        
         <form className={styles.form} onSubmit={handleSubmit}>
-          <input className={styles.input} type="text" placeholder="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} required />
-          <input className={styles.input} type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input 
+            className={styles.input} 
+            type="text" 
+            placeholder="Usuario" 
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+            required 
+          />
+          <input 
+            className={styles.input} 
+            type="password" 
+            placeholder="Contraseña" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
           <button type="submit" className={styles.loginBtn}>Entrar</button>
         </form>
-        <div className={styles.footer}>¿No tienes cuenta? <Link to="/register">Regístrate</Link></div>
+        <div className={styles.footer}>
+          ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
+        </div>
       </div>
     </div>
   );

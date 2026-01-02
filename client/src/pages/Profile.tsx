@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'; // Se eliminó 'React' para evitar TS6133
+import { useState, useEffect, useCallback } from 'react';
 import { MoreHorizontal, LogOut, MessageSquare } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +20,6 @@ export const Profile = () => {
 
   const isOwnProfile = currentUser?.username === profileUsername;
 
-  // SOLUCIÓN TS2322: Cambiamos 'null' por 'undefined' para que sea compatible con el prop 'src'
   const getFullAvatarUrl = (url: string | undefined): string | undefined => {
     if (!url) return undefined; 
     if (url.startsWith('http') || url.startsWith('blob')) return url;
@@ -67,7 +66,24 @@ export const Profile = () => {
   }, [profileUsername, activeTab]);
 
   useEffect(() => { fetchUserData(); }, [fetchUserData]);
-  useEffect(() => { fetchTabContent(); }, [fetchTabContent]);
+  
+  // EFECTO DE SINCRONIZACIÓN GLOBAL
+  useEffect(() => { 
+    fetchTabContent(); 
+
+    // Escuchamos el evento disparado por el MainLayout
+    const handleGlobalUpdate = () => {
+      // Solo actualizamos si el usuario está viendo su propio perfil o la pestaña "Threads"
+      // para asegurar que el nuevo post aparezca inmediatamente.
+      fetchTabContent();
+    };
+
+    window.addEventListener('postCreatedGlobal', handleGlobalUpdate);
+    
+    return () => {
+      window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
+    };
+  }, [fetchTabContent]);
 
   const handleFollow = async () => {
     if (!currentUser || isOwnProfile) return;

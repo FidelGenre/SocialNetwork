@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // Sin 'React' al principio
+import { useState, useEffect } from 'react';
 import { Home, Search, Heart, User, Menu, MessageSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -20,22 +20,14 @@ export const Sidebar = () => {
   
   const location = useLocation();
 
-  // --- LÓGICA DE DETECCIÓN POR ATRIBUTO ---
   useEffect(() => {
     const checkTheme = () => {
-      // Tu CSS usa [data-theme='light'], así que buscamos ese atributo exacto
       const htmlTheme = document.documentElement.getAttribute('data-theme');
       const bodyTheme = document.body.getAttribute('data-theme');
-      
-      // Si el atributo es 'light', desactivamos el modo oscuro. 
-      // Si el atributo no existe o es 'dark', se mantiene oscuro (por tu :root)
       setIsDarkMode(htmlTheme !== 'light' && bodyTheme !== 'light');
     };
 
-    // Ejecución inicial
     checkTheme();
-
-    // Observador para detectar cambios en tiempo real
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
@@ -49,8 +41,8 @@ export const Sidebar = () => {
       try {
         const res = await api.get(`/activities/${user.username}`);
         const activities = res.data;
-        setHasUnreadMessages(activities.some((a: any) => a.type === 'MESSAGE' && !a.read));
-        setHasUnreadActivity(activities.some((a: any) => a.type !== 'MESSAGE' && !a.read));
+        setHasUnreadMessages(activities.some((a) => a.type === 'MESSAGE' && !a.read));
+        setHasUnreadActivity(activities.some((a) => a.type !== 'MESSAGE' && !a.read));
       } catch (e) {}
     };
     checkNotifications();
@@ -68,6 +60,7 @@ export const Sidebar = () => {
 
   return (
     <aside className={styles.sidebar}>
+      {/* Sección Superior: Solo visible en Escritorio */}
       <div className={styles.topSection}>
         <div className={styles.logo}>
           <img 
@@ -78,6 +71,7 @@ export const Sidebar = () => {
         </div>
       </div>
 
+      {/* Navegación: Se vuelve horizontal en móvil */}
       <nav className={styles.navSection}>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -99,8 +93,9 @@ export const Sidebar = () => {
         })}
       </nav>
 
+      {/* Sección Inferior: Menú de opciones (Hamburguesa) */}
       <div className={styles.bottomSection}>
-        {isMenuOpen && <OptionsMenu />}
+        {isMenuOpen && <div className={styles.optionsWrapper}><OptionsMenu /></div>}
         <button className={styles.menuBtn} onClick={() => setIsMenuOpen(!isMenuOpen)}>
           <Menu 
             size={26} 
