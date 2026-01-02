@@ -61,3 +61,13 @@ uploads/*
 # Base de datos local (si usas H2 o archivos locales)
 *.mv.db
 *.trace.db
+
+application.properties
+
+target/
+.git/
+.gitignore
+HELP.md
+.mvn/
+mvnw
+mvnw.cmd
