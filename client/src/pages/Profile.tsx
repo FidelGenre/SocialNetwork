@@ -20,10 +20,11 @@ export const Profile = () => {
 
   const isOwnProfile = currentUser?.username === profileUsername;
 
+  // CORRECCIÓN: Se cambió localhost por la URL de producción de Render
   const getFullAvatarUrl = (url: string | undefined): string | undefined => {
     if (!url) return undefined; 
     if (url.startsWith('http') || url.startsWith('blob')) return url;
-    return `http://localhost:8080${url}`;
+    return `https://socialnetworkserver-3kyu.onrender.com${url}`;
   };
 
   const fetchUserData = useCallback(async () => {
@@ -71,10 +72,8 @@ export const Profile = () => {
   useEffect(() => { 
     fetchTabContent(); 
 
-    // Escuchamos el evento disparado por el MainLayout
     const handleGlobalUpdate = () => {
-      // Solo actualizamos si el usuario está viendo su propio perfil o la pestaña "Threads"
-      // para asegurar que el nuevo post aparezca inmediatamente.
+      // Actualiza el feed si se crea un post desde el Layout global
       fetchTabContent();
     };
 

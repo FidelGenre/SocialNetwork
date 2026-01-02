@@ -20,7 +20,6 @@ const formatTime = (dateString: string) => {
   return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
 };
 
-// CORRECCIÓN DE TIPOS PARA RENDER: id como string y displayName opcional
 export interface PostCardProps {
   id: string; 
   content: string;
@@ -32,7 +31,7 @@ export interface PostCardProps {
   repostFromUserName?: string;
   likedByUsers?: { username: string }[]; 
   user?: {
-    displayName?: string; // El '?' evita el error TS2322
+    displayName?: string;
     username: string;
     avatarUrl?: string;
   };
@@ -55,7 +54,6 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  // URL de producción para Render
   const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
   useEffect(() => {
@@ -85,6 +83,14 @@ export const PostCard: React.FC<PostCardProps> = ({
   const getFullImageUrl = (path: string) => {
     if (!path) return '';
     return path.startsWith('http') ? path : `${BASE_URL}${path}`;
+  };
+
+  // --- NUEVA FUNCIÓN: NAVEGAR AL PERFIL ---
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // IMPORTANTE: evita que se abra el detalle del post
+    if (user?.username) {
+      navigate(`/profile/${user.username}`);
+    }
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -119,9 +125,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       alert(`¡Post compartido con @${targetUsername}!`);
       setShowShareMenu(false);
       setSearchQuery('');
-    } catch (e) { 
-      console.error(e); 
-    }
+    } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -151,7 +155,12 @@ export const PostCard: React.FC<PostCardProps> = ({
       )}
 
       <div className={styles.card}>
-        <div className={styles.avatar}>
+        {/* AVATAR CLICKABLE */}
+        <div 
+          className={styles.avatar} 
+          onClick={handleProfileClick}
+          style={{ cursor: 'pointer' }}
+        >
           {user?.avatarUrl ? (
             <img src={getFullImageUrl(user.avatarUrl)} alt={user.username} className={styles.avatarImg} />
           ) : (
@@ -161,7 +170,12 @@ export const PostCard: React.FC<PostCardProps> = ({
         
         <div className={styles.contentCol}>
           <div className={styles.header}>
-            <div className={styles.userInfo}>
+            {/* NOMBRE CLICKABLE */}
+            <div 
+              className={styles.userInfo} 
+              onClick={handleProfileClick}
+              style={{ cursor: 'pointer' }}
+            >
               <span className={styles.displayName}>{user?.displayName || user?.username || 'Usuario'}</span>
             </div>
 
