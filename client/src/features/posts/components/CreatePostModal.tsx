@@ -5,7 +5,8 @@ import api from '../../../services/api';
 import styles from './CreatePostModal.module.css';
 
 interface CreatePostModalProps {
-  parentId?: number;
+  // CORRECCIÓN: parentId ahora es string para ser compatible con PostCard y Home
+  parentId?: string; 
   onClose: () => void;
   onPost: () => void;
 }
@@ -42,14 +43,14 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ parentId, onCl
     try {
       const formData = new FormData();
       formData.append('content', content);
-      // Enviamos el username solo en el FormData para evitar el error 404 por duplicidad
+      // Enviamos el username en el FormData para el backend en Spring Boot
       formData.append('username', user.username);
       
       if (selectedFile) {
         formData.append('file', selectedFile);
       }
       
-      // La URL se mantiene limpia. El backend recibirá el username desde el FormData
+      // La interpolación de parentId funciona correctamente siendo string
       const url = parentId ? `/posts?parentId=${parentId}` : '/posts';
       
       await api.post(url, formData);
@@ -69,35 +70,37 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ parentId, onCl
           <button className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
             <X size={20} />
           </button>
-          <span className={styles.headerTitle}>{parentId ? 'Responder' : 'Nuevo hilo'}</span>
+          <span className={styles.headerTitle}>
+            {parentId ? 'Responder' : 'Nuevo hilo'}
+          </span>
           <div style={{ width: 28 }}></div>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.formBody}>
           <div className={styles.mainContainer}>
-            {/* Columna Izquierda */}
+            {/* Columna Izquierda: Avatar y Línea de hilo */}
             <div className={styles.leftColumn}>
               <div className={styles.avatar}>
-                {user?.displayName?.charAt(0).toUpperCase()}
+                {user?.displayName?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <div className={styles.connectorLine}></div>
+              {parentId && <div className={styles.connectorLine}></div>}
             </div>
 
-            {/* Columna Derecha */}
+            {/* Columna Derecha: Contenido */}
             <div className={styles.rightColumn}>
               <div className={styles.userInfo}>
                 <span className={styles.username}>{user?.username}</span>
               </div>
               
               <textarea
-                placeholder="¿Qué hay de nuevo?"
+                placeholder={parentId ? "Publica tu respuesta" : "¿Qué hay de nuevo?"}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className={styles.textarea}
                 autoFocus
               />
 
-              {/* Vista previa pequeña de la imagen */}
+              {/* Vista previa de imagen seleccionada */}
               {previewUrl && (
                 <div className={styles.imagePreviewContainer}>
                   <img src={previewUrl} alt="Preview" className={styles.previewImg} />
