@@ -10,7 +10,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/messages")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "FRONTEND_URL:https://socialnetwork-m3m4.onrender.com")
 public class MessageController {
 
     @Autowired private MessageRepository messageRepository;

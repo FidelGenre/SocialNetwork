@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 // Asegúrate de que este puerto coincida con tu Vite (5173 según tu terminal)
-@CrossOrigin(origins = "http://localhost:5173") 
+@CrossOrigin(origins = "${FRONTEND_URL:https://socialnetwork-m3m4.onrender.com}")
 public class AuthController {
 
     @Autowired

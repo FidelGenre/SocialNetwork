@@ -9,7 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/activities")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "FRONTEND_URL:https://socialnetwork-m3m4.onrender.com")
 public class ActivityController {
 
     @Autowired

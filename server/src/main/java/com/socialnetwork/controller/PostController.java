@@ -17,7 +17,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/posts")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "FRONTEND_URL:https://socialnetwork-m3m4.onrender.com")
 public class PostController {
 
     @Autowired private PostRepository postRepository;

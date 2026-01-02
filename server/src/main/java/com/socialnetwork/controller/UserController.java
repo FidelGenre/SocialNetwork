@@ -24,7 +24,7 @@ import java.util.UUID;
 @RequestMapping("/api/users")
 // CORRECCIÓN CLAVE: Se agregan los métodos PATCH y OPTIONS explícitamente para evitar el bloqueo de CORS
 @CrossOrigin(
-    origins = "http://localhost:5173", 
+    origins = "FRONTEND_URL:https://socialnetwork-m3m4.onrender.com", 
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS}
 )
 public class UserController {
