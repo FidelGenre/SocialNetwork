@@ -22,7 +22,7 @@ import java.util.*;
  * Autoriza tanto el entorno de desarrollo local como tu URL de producción en Render.
  */
 @CrossOrigin(
-    origins = {"https://socialnetwork-m3m4.onrender.com"},
+    origins = {"https://socialnetwork-m3m4.onrender.com", "http://localhost:5173"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )
@@ -44,7 +44,7 @@ public class PostController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // 2. CREAR POST (Soporta contenido de texto e imagen)
+    // 2. CREAR POST (Texto e Imagen)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createPost(
             @RequestParam("content") String content,
@@ -64,7 +64,6 @@ public class PostController {
         post.setRepliesCount(0);
         post.setRepostsCount(0);
 
-        // Procesamiento de archivo si existe
         if (file != null && !file.isEmpty()) {
             try {
                 if (!Files.exists(root)) Files.createDirectories(root);
@@ -76,7 +75,6 @@ public class PostController {
             }
         }
 
-        // Si es una respuesta a otro post
         if (parentId != null) {
             postRepository.findById(parentId).ifPresent(parent -> {
                 post.setParentPost(parent);
@@ -88,30 +86,45 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(postRepository.save(post));
     }
 
-    // 3. ELIMINAR POST (Con limpieza de relaciones)
+    // 3. ELIMINAR POST (MODIFICADO: Borrado profundo de todas las dependencias)
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> deletePost(@PathVariable("id") Long id) {
         return postRepository.findById(id).map(post -> {
-            // Limpiar notificaciones asociadas
+            // A. Limpiar notificaciones asociadas al post (Likes, Reposts, etc)
             activityRepository.deleteByPost(post);
             
-            // Limpiar relación de likes
+            // B. Limpiar relación de likes (tabla intermedia)
             post.getLikedByUsers().clear();
             
-            // Si era una respuesta, decrementamos el contador del padre
+            // C. Limpiar mensajes que compartieron este post (ponemos la referencia en null)
+            List<Message> sharedInMessages = messageRepository.findBySharedPost(post);
+            sharedInMessages.forEach(msg -> msg.setSharedPost(null));
+            messageRepository.saveAll(sharedInMessages);
+
+            // D. BORRAR REPOSTS: Buscamos posts cuyo originalPostId coincida con este ID
+            List<Post> reposts = postRepository.findByOriginalPostId(id);
+            postRepository.deleteAll(reposts);
+
+            // E. BORRAR RESPUESTAS: Buscamos hilos que tengan a este post como padre
+            List<Post> replies = postRepository.findByParentPost(post);
+            postRepository.deleteAll(replies);
+
+            // F. Si el post a borrar es una respuesta, decrementamos el contador del padre
             if (post.getParentPost() != null) {
                 Post parent = post.getParentPost();
                 parent.setRepliesCount(Math.max(0, parent.getRepliesCount() - 1));
                 postRepository.save(parent);
             }
 
+            // G. Borrado final del post principal
             postRepository.delete(post);
-            return ResponseEntity.ok().body(Map.of("message", "Post eliminado correctamente"));
+            
+            return ResponseEntity.ok().body(Map.of("message", "Post y todas sus referencias (reposts/respuestas) eliminados"));
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // 4. DAR/QUITAR ME GUSTA (Toggle)
+    // 4. DAR/QUITAR ME GUSTA
     @PatchMapping("/{id}/like")
     @Transactional
     public ResponseEntity<?> likePost(@PathVariable("id") Long id, @RequestParam("username") String username) {
@@ -146,7 +159,6 @@ public class PostController {
             Post original = originalOpt.get();
             User me = userWhoRepostsOpt.get();
 
-            // Verificar si ya existe el repost para quitarlo (Toggle)
             Optional<Post> existingRepost = postRepository.findAll().stream()
                 .filter(p -> p.getUser().getId().equals(me.getId()) && id.equals(p.getOriginalPostId()))
                 .findFirst();
@@ -176,7 +188,7 @@ public class PostController {
         return ResponseEntity.notFound().build();
     }
 
-    // 6. COMPARTIR POST POR MENSAJE PRIVADO
+    // 6. COMPARTIR EN CHAT
     @PostMapping("/{id}/share")
     @Transactional
     public ResponseEntity<?> sharePost(
@@ -208,7 +220,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error al compartir");
     }
 
-    // 7. ENDPOINTS DE FILTRADO (FEED Y PERFIL)
+    // 7. FEED Y PERFIL
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
         return ResponseEntity.ok(postRepository.findAllByParentPostIsNullOrderByCreatedAtDesc());
@@ -251,9 +263,7 @@ public class PostController {
         }
     }
 
-    // MÁTODO PRIVADO PARA ACTIVIDADES
     private void createActivity(String type, User actor, User recipient, Post post) {
-        // Evitar notificarse a sí mismo (excepto en mensajes compartidos)
         if (actor.getUsername().equals(recipient.getUsername()) && !type.equals("SHARE_MSG")) return;
         Activity act = new Activity();
         act.setType(type);

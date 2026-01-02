@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
-import { ImageIcon, Send } from 'lucide-react';
+import { ImageIcon, Send, ChevronLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -16,14 +16,15 @@ export const Messages = () => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [newMessage, setNewMessage] = useState('');
 
-  const BASE_URL = 'http://localhost:8080';
+  // Cambiado para que apunte a tu servidor real en Render
+  const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
   const getFullImageUrl = (path: string) => {
     if (!path) return '';
     return path.startsWith('http') ? path : `${BASE_URL}${path}`;
   };
 
-  // Carga de contactos y notificaciones
+  // 1. Carga de contactos y notificaciones
   useEffect(() => {
     if (currentUser) {
       const fetchData = async () => {
@@ -32,7 +33,7 @@ export const Messages = () => {
           setContacts(resContacts.data);
           const resCounts = await api.get(`/messages/unread-counts/${currentUser.username}`);
           setUnreadCounts(resCounts.data);
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error("Error cargando contactos:", err); }
       };
       fetchData();
       const interval = setInterval(fetchData, 5000); 
@@ -40,27 +41,32 @@ export const Messages = () => {
     }
   }, [currentUser]);
 
-  // Carga de la conversación activa
+  // 2. Carga de la conversación activa y marcado como leído
   useEffect(() => {
     if (urlUsername && currentUser) {
       const fetchChat = async () => {
         try {
           const res = await api.get(`/messages/conversation?user1=${currentUser.username}&user2=${urlUsername}`);
           setMessages(res.data);
+          // Marca mensajes como leídos al entrar al chat
           await api.patch(`/messages/read?username=${currentUser.username}&from=${urlUsername}`);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Error cargando chat:", e); }
       };
       fetchChat();
       const interval = setInterval(fetchChat, 4000);
       return () => clearInterval(interval);
+    } else {
+      setMessages([]); // Limpiar mensajes si no hay usuario seleccionado
     }
   }, [urlUsername, currentUser]);
 
+  // 3. Auto-scroll al fondo cuando hay nuevos mensajes
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages]);
 
-  // Se usa FormEvent directamente en lugar de React.FormEvent
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !urlUsername || !currentUser) return;
@@ -68,47 +74,64 @@ export const Messages = () => {
       await api.post(`/messages/send?from=${currentUser.username}&to=${urlUsername}`, 
         newMessage.trim(), { headers: { 'Content-Type': 'text/plain' } });
       setNewMessage('');
+      // Actualización inmediata del chat tras enviar
       const res = await api.get(`/messages/conversation?user1=${currentUser.username}&user2=${urlUsername}`);
       setMessages(res.data);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error enviando mensaje:", e); }
   };
 
   return (
-    <div className={styles.container}>
+    /* Clase dinámica 'chatOpen' para controlar la visibilidad en móviles */
+    <div className={`${styles.container} ${urlUsername ? styles.chatOpen : ''}`}>
+      
+      {/* SIDEBAR: Lista de chats */}
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <h2 className={styles.sidebarTitle}>Chat</h2>
+          <h2 className={styles.sidebarTitle}>Mensajes</h2>
         </div>
         <div className={styles.contactList}>
-          {contacts.map((contact) => (
-            <div 
-              key={contact.username} 
-              className={`${styles.contactItem} ${urlUsername === contact.username ? styles.activeContact : ''}`} 
-              onClick={() => navigate(`/messages/${contact.username}`)}
-            >
-              <div className={styles.avatarContainer}>
-                <div className={styles.avatarPlaceholder}>
-                  {(contact.displayName || contact.username)[0].toUpperCase()}
+          {contacts.length > 0 ? (
+            contacts.map((contact) => (
+              <div 
+                key={contact.username} 
+                className={`${styles.contactItem} ${urlUsername === contact.username ? styles.activeContact : ''}`} 
+                onClick={() => navigate(`/messages/${contact.username}`)}
+              >
+                <div className={styles.avatarContainer}>
+                  <div className={styles.avatarPlaceholder}>
+                    {(contact.displayName || contact.username)[0].toUpperCase()}
+                  </div>
+                  {/* Badge de mensajes no leídos */}
+                  {unreadCounts[contact.username] > 0 && urlUsername !== contact.username && (
+                    <div className={styles.unreadBadge}>{unreadCounts[contact.username]}</div>
+                  )}
                 </div>
-                {unreadCounts[contact.username] > 0 && urlUsername !== contact.username && (
-                  <div className={styles.unreadBadge}>{unreadCounts[contact.username]}</div>
-                )}
+                <div className={styles.contactInfo}>
+                  <div className={styles.contactName}>{contact.displayName || contact.username}</div>
+                  <div className={styles.lastMessage}>Haz clic para chatear</div>
+                </div>
               </div>
-              <div className={styles.contactInfo}>
-                <span className={styles.contactName}>{contact.displayName || contact.username}</span>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className={styles.emptyState}><p>No tienes chats aún.</p></div>
+          )}
         </div>
       </div>
 
+      {/* CHAT AREA: Visualización del mensaje seleccionado */}
       <div className={styles.chatArea}>
         {urlUsername ? (
           <>
             <div className={styles.chatHeader}>
-              <div className={styles.headerInfo}>
-                <span className={styles.headerName}>{urlUsername}</span>
-                <span className={styles.headerStatus}>En línea</span>
+              <div className={styles.headerLeft}>
+                {/* Botón Volver: Solo visible en móvil vía CSS */}
+                <button className={styles.backBtn} onClick={() => navigate('/messages')}>
+                  <ChevronLeft size={24} />
+                </button>
+                <div className={styles.headerInfo}>
+                  <span className={styles.headerName}>{urlUsername}</span>
+                  <span className={styles.headerStatus}>En línea</span>
+                </div>
               </div>
             </div>
 
@@ -118,6 +141,7 @@ export const Messages = () => {
                   <div className={`${styles.messageBubble} ${m.sender.username === currentUser?.username ? styles.myBubble : styles.theirBubble}`}>
                     <div className={styles.msgContent}>{m.content}</div>
 
+                    {/* Renderizado de Post Compartido si existe */}
                     {m.sharedPost && (
                       <div className={styles.sharedPostCard} onClick={() => navigate(`/post/${m.sharedPost.id}`)}>
                         <div className={styles.previewHeader}>
@@ -154,7 +178,9 @@ export const Messages = () => {
             </form>
           </>
         ) : (
-          <div className={styles.emptyState}><p>Selecciona un chat.</p></div>
+          <div className={styles.emptyState}>
+            <p>Selecciona una conversación para empezar a chatear.</p>
+          </div>
         )}
       </div>
     </div>

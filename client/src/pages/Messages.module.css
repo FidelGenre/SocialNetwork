@@ -1,42 +1,37 @@
-/* Messages.module.css */
-
+/* Contenedor Principal */
 .container {
     display: flex;
     height: 86vh;
-    width: 70vh;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     background-color: var(--bg-color);
     color: var(--text-primary);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    border: 1px solid var(--border-main);
+    overflow: hidden;
 }
 
-/* SIDEBAR */
+/* =============================================
+   SIDEBAR (Lista de Contactos)
+   ============================================= */
 .sidebar {
-    width: 260px; /* Mantengo el ancho aumentado para mejor legibilidad */
+    width: 350px;
     border-right: 1px solid var(--border-main);
     display: flex;
     flex-direction: column;
     background-color: var(--bg-color);
+    transition: all 0.3s ease;
 }
 
 .sidebarHeader {
-    padding: 15px 15px; /* Alineación a la izquierda */
+    padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .sidebarTitle { font-size: 20px; font-weight: 800; }
-
-.iconBtn {
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-}
-
-.iconBtn:hover { background-color: var(--bg-secondary); }
 
 .searchBarContainer { padding: 10px 15px; }
 
@@ -64,12 +59,11 @@
 .contactItem {
     display: flex;
     align-items: center;
-    padding: 12px 15px; /* Alineado a la izquierda */
+    padding: 12px 15px;
     cursor: pointer;
     border-bottom: 1px solid var(--border-main);
 }
 
-/* Cambio: El indicador ahora es del color del texto principal (Blanco/Negro según tema) */
 .activeContact { 
     background-color: var(--bg-secondary); 
     border-right: 3px solid var(--text-primary); 
@@ -88,48 +82,74 @@
     font-weight: bold;
 }
 
-.onlineIndicator {
+.unreadBadge {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 12px;
-    height: 12px;
-    background-color: #00ba7c;
-    border-radius: 50%;
-    border: 2px solid var(--bg-color);
+    top: -5px;
+    right: -5px;
+    background-color: var(--text-primary);
+    color: var(--bg-color);
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
 }
 
 .contactInfo { flex: 1; overflow: hidden; }
-
 .contactName { font-weight: 700; color: var(--text-primary); }
-
-.timestamp { color: var(--text-secondary); font-size: 12px; }
-
 .lastMessage { color: var(--text-secondary); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* CHAT AREA */
+/* =============================================
+   CHAT AREA (Conversación)
+   ============================================= */
 .chatArea {
     flex: 1;
     display: flex;
     flex-direction: column;
     background-color: var(--bg-color);
+    transition: all 0.3s ease;
 }
 
 .chatHeader {
-    padding: 10px 30px;
+    padding: 10px 20px;
     border-bottom: 1px solid var(--border-main);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 65px; /* Altura fija para alineación */
 }
 
-.headerName { font-weight: 800; font-size: 17px; display: block; }
+/* Contenedor para flecha + nombre */
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
 
-.headerStatus { color: #00ba7c; font-size: 13px; }
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.headerName { font-weight: 800; font-size: 17px; line-height: 1.2; }
+.headerStatus { color: #00ba7c; font-size: 13px; line-height: 1.2; }
+
+/* BOTÓN DE VOLVER (Corregido) */
+.backBtn {
+    display: none; /* Oculto en PC */
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    margin-left: -10px; /* Alineación perfecta al borde */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 .messageList {
     flex: 1;
-    padding: 15px 30px;
+    padding: 15px 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -137,21 +157,18 @@
 }
 
 .messageRow { display: flex; margin-bottom: 2px; }
-
 .myMessageRow { justify-content: flex-end; }
-
 .theirMessageRow { justify-content: flex-start; }
 
 .messageBubble {
     padding: 10px 16px;
     border-radius: 18px;
     font-size: 15px;
-    max-width: 75%;
+    max-width: 85%;
     line-height: 1.4;
     word-wrap: break-word;
 }
 
-/* Cambio: Burbuja propia en gris oscuro para estilo Threads */
 .myBubble { 
     background-color: #3d3d3d; 
     color: #ffffff; 
@@ -167,7 +184,7 @@
 
 /* INPUT AREA */
 .inputArea {
-    padding: 10px 30px;
+    padding: 10px 20px;
     border-top: 1px solid var(--border-main);
     display: flex;
     align-items: center;
@@ -194,13 +211,11 @@
     font-size: 14px;
 }
 
-/* Cambio: Iconos en color neutro */
 .iconBtnInput { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; }
 .sendBtnIcon { background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 4px; }
-
 .sendBtnIcon:disabled { opacity: 0.2; }
 
-.emptyState { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+.emptyState { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); padding: 20px; text-align: center; }
 
 /* Tarjeta de Post Compartido */
 .sharedPostCard {
@@ -210,41 +225,7 @@
     border-radius: 12px;
     padding: 12px;
     cursor: pointer;
-    transition: background 0.2s;
-}
-
-.sharedPostCard:hover {
-    background-color: var(--bg-secondary);
-}
-
-.previewHeader {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-}
-
-.miniAvatar {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: var(--border-main);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.previewDisplayName {
-    font-size: 13px;
-    font-weight: bold;
-    color: var(--text-primary);
-}
-
-.previewUsername {
-    font-size: 12px;
-    color: var(--text-secondary);
+    max-width: 100%;
 }
 
 .previewText {
@@ -258,16 +239,61 @@
     overflow: hidden;
 }
 
-.previewImageContainer {
-    margin-top: 8px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border-main);
-}
-
 .previewImage {
     width: 100%;
     max-height: 200px;
     object-fit: cover;
     display: block;
+    border-radius: 8px;
+}
+
+/* =============================================
+    RESPONSIVE DESIGN (MEDIA QUERIES)
+   ============================================= */
+
+@media (max-width: 768px) {
+    .container {
+        height: 100vh;
+        border: none;
+    }
+
+    .sidebar {
+        width: 100%; 
+        border-right: none;
+    }
+
+    .chatArea {
+        display: none; 
+        width: 100%;
+    }
+
+    /* Clase activa para móviles controlada por React */
+    .container.chatOpen .sidebar {
+        display: none;
+    }
+
+    .container.chatOpen .chatArea {
+        display: flex;
+    }
+
+    .backBtn {
+        display: flex; /* Se muestra la flecha solo en móvil */
+    }
+
+    .messageBubble {
+        max-width: 90%;
+    }
+
+    .sidebarTitle {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .avatarPlaceholder {
+        width: 40px;
+        height: 40px;
+    }
+    .contactName { font-size: 15px; }
+    .messageBubble { font-size: 14px; }
 }
