@@ -39,23 +39,27 @@ export interface PostCardProps {
 
 export const PostCard: React.FC<PostCardProps> = ({ 
   id, content, imageUrl, createdAt, likesCount: initialLikes, 
-  repliesCount, repostsCount, repostFromUserName, likedByUsers, user 
+  repliesCount, repostsCount: initialReposts, repostFromUserName, likedByUsers, user 
 }) => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
+  // --- ESTADOS LOCALES PARA INTERACCIÓN INMEDIATA ---
   const [likes, setLikes] = useState(initialLikes);
   const [isLiked, setIsLiked] = useState(false);
+  const [reposts, setReposts] = useState(initialReposts);
+  const [isReposted, setIsReposted] = useState(!!repostFromUserName); // Si viene con nombre de repost, está activo
+
   const [showReplies, setShowReplies] = useState(false);
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
   const [replies, setReplies] = useState<PostCardProps[]>([]);
-
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
   const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
+  // Efecto para inicializar el estado del Like
   useEffect(() => {
     if (likedByUsers && currentUser) {
       const alreadyLiked = likedByUsers.some(u => u.username === currentUser.username);
@@ -63,6 +67,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   }, [likedByUsers, currentUser]);
 
+  // Efecto para búsqueda de usuarios al compartir
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 1) {
@@ -76,7 +81,6 @@ export const PostCard: React.FC<PostCardProps> = ({
         setSearchResults([]);
       }
     }, 300);
-
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
@@ -85,12 +89,9 @@ export const PostCard: React.FC<PostCardProps> = ({
     return path.startsWith('http') ? path : `${BASE_URL}${path}`;
   };
 
-  // --- NUEVA FUNCIÓN: NAVEGAR AL PERFIL ---
   const handleProfileClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // IMPORTANTE: evita que se abra el detalle del post
-    if (user?.username) {
-      navigate(`/profile/${user.username}`);
-    }
+    e.stopPropagation();
+    if (user?.username) navigate(`/profile/${user.username}`);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -99,6 +100,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     navigate(`/post/${id}`);
   };
 
+  // --- LÓGICA DE LIKE ACTUALIZADA ---
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
@@ -109,13 +111,24 @@ export const PostCard: React.FC<PostCardProps> = ({
     } catch (e) { console.error("Error en Like:", e); }
   };
 
+  // --- LÓGICA DE REPOST ACTUALIZADA (TOGGLE) ---
   const handleRepost = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
     try {
-      await api.post(`/posts/${id}/repost?username=${currentUser.username}`);
-      window.location.reload(); 
-    } catch (e) { console.error("Error en Repost:", e); }
+      // Llamamos al nuevo endpoint del backend
+      const res = await api.post(`/posts/${id}/repost?username=${currentUser.username}`);
+      
+      if (res.data.action === "deleted") {
+        setReposts(prev => Math.max(0, prev - 1));
+        setIsReposted(false);
+      } else {
+        setReposts(prev => prev + 1);
+        setIsReposted(true);
+      }
+    } catch (e) { 
+      console.error("Error en Repost:", e); 
+    }
   };
 
   const handleSharePost = async (targetUsername: string) => {
@@ -133,7 +146,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     if (!window.confirm("¿Eliminar este post definitivamente?")) return;
     try {
       await api.delete(`/posts/${id}?username=${currentUser?.username}`);
-      window.location.reload();
+      window.location.reload(); // Para el delete, el reload es aceptable para limpiar el feed
     } catch (e) { console.error("Error al borrar:", e); }
   };
 
@@ -155,12 +168,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       )}
 
       <div className={styles.card}>
-        {/* AVATAR CLICKABLE */}
-        <div 
-          className={styles.avatar} 
-          onClick={handleProfileClick}
-          style={{ cursor: 'pointer' }}
-        >
+        <div className={styles.avatar} onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
           {user?.avatarUrl ? (
             <img src={getFullImageUrl(user.avatarUrl)} alt={user.username} className={styles.avatarImg} />
           ) : (
@@ -170,12 +178,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         
         <div className={styles.contentCol}>
           <div className={styles.header}>
-            {/* NOMBRE CLICKABLE */}
-            <div 
-              className={styles.userInfo} 
-              onClick={handleProfileClick}
-              style={{ cursor: 'pointer' }}
-            >
+            <div className={styles.userInfo} onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
               <span className={styles.displayName}>{user?.displayName || user?.username || 'Usuario'}</span>
             </div>
 
@@ -198,20 +201,23 @@ export const PostCard: React.FC<PostCardProps> = ({
           )}
           
           <div className={styles.actions}>
+            {/* BOTÓN COMENTARIOS */}
             <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setIsReplyModalOpen(true); }}>
               <MessageCircle size={18} />
               <span>{repliesCount > 0 ? repliesCount : ''}</span>
             </button>
 
+            {/* BOTÓN REPOST (ACTUALIZADO CON ESTADO) */}
             <button 
               className={styles.actionBtn} 
               onClick={handleRepost}
-              style={{ color: repostFromUserName ? '#00ba7c' : 'inherit' }}
+              style={{ color: isReposted ? '#00ba7c' : 'inherit' }}
             >
-              <Repeat2 size={18} color={repostFromUserName ? '#00ba7c' : 'currentColor'} />
-              <span>{repostsCount > 0 ? repostsCount : ''}</span>
+              <Repeat2 size={18} color={isReposted ? '#00ba7c' : 'currentColor'} />
+              <span>{reposts > 0 ? reposts : ''}</span>
             </button>
             
+            {/* BOTÓN LIKE */}
             <button 
               className={styles.actionBtn} 
               onClick={handleLike} 
@@ -221,6 +227,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{likes > 0 ? likes : ''}</span>
             </button>
 
+            {/* BOTÓN COMPARTIR */}
             <div className={styles.shareContainer}>
               <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setShowShareMenu(!showShareMenu); }}>
                 <Send size={18} />
@@ -257,6 +264,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             </div>
           </div>
 
+          {/* SECCIÓN DE RESPUESTAS */}
           {repliesCount > 0 && (
             <button 
               className={styles.viewRepliesBtn} 
