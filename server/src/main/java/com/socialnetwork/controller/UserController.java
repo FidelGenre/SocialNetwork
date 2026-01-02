@@ -22,10 +22,15 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
-// CORRECCIÓN CLAVE: Se agregan los métodos PATCH y OPTIONS explícitamente para evitar el bloqueo de CORS
+/**
+ * CONFIGURACIÓN DE CORS: 
+ * Se autoriza la URL específica de tu frontend en Render.
+ * Se permiten los métodos necesarios para que el navegador no bloquee las peticiones preflight (OPTIONS).
+ */
 @CrossOrigin(
-    origins = "FRONTEND_URL:https://socialnetwork-m3m4.onrender.com", 
-    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS}
+    origins = {"https://socialnetwork-m3m4.onrender.com"}, 
+    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS},
+    allowedHeaders = "*"
 )
 public class UserController {
 
@@ -35,9 +40,10 @@ public class UserController {
     @Autowired
     private ActivityRepository activityRepository;
 
+    // Directorio de subida (Render usa sistemas efímeros, pero esto funcionará para la sesión actual)
     private final Path root = Paths.get("uploads");
 
-    // 1. SEGUIR/DEJAR DE SEGUIR (TOGGLE)
+    // 1. SEGUIR / DEJAR DE SEGUIR
     @PostMapping("/{targetUsername}/follow")
     @Transactional
     public ResponseEntity<?> followUser(
@@ -53,6 +59,7 @@ public class UserController {
                 } else {
                     follower.getFollowing().add(target);
                     
+                    // Registro de actividad de notificación
                     Activity act = new Activity();
                     act.setType("FOLLOW");
                     act.setActor(follower);
@@ -74,7 +81,7 @@ public class UserController {
         return ResponseEntity.ok(userRepository.findByUsernameContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(query, query));
     }
 
-    // 3. ACTUALIZAR DATOS DE TEXTO (Nombre y Bio)
+    // 3. ACTUALIZAR PERFIL (Texto)
     @PutMapping("/{username}")
     public ResponseEntity<User> updateUser(
             @PathVariable("username") String username, 
@@ -86,7 +93,7 @@ public class UserController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // 4. ACTUALIZAR AVATAR (ARCHIVO REAL)
+    // 4. ACTUALIZAR AVATAR (Multipart)
     @PatchMapping(value = "/{username}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateAvatar(
             @PathVariable("username") String username,
@@ -101,14 +108,12 @@ public class UserController {
             try {
                 if (!Files.exists(root)) Files.createDirectories(root);
 
-                // Generar un nombre único para la imagen
+                // Generar nombre único para evitar colisiones de archivos
                 String fileName = "avatar_" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
                 Files.copy(file.getInputStream(), this.root.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
 
-                // Actualizamos la URL en el objeto User
+                // El path que se guarda es el que el frontend usará para pedir la imagen
                 user.setAvatarUrl("/api/posts/images/" + fileName);
-                
-                // GUARDAR EN BD: Aquí es donde Hibernate ejecutará el UPDATE
                 userRepository.save(user);
 
                 return ResponseEntity.ok(user);

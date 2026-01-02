@@ -13,10 +13,16 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                // Aplicamos la configuración a todas las rutas que empiecen con /api/
                 registry.addMapping("/api/**")
-                        .allowedOrigins("FRONTEND_URL:https://socialnetwork-m3m4.onrender.com") // El puerto de tu React
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        // Autorizamos el frontend en Render y el entorno local de desarrollo
+                        .allowedOrigins(
+                            "https://socialnetwork-m3m4.onrender.com"
+                        )
+                        // Incluimos PATCH (necesario para likes y notificaciones leídas)
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
+                        // Importante si en el futuro decides usar Cookies o Sesiones
                         .allowCredentials(true);
             }
         };
