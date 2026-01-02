@@ -6,9 +6,9 @@ import { PostCard } from '../features/posts/components/PostCard';
 import api from '../services/api';
 import styles from './Home.module.css';
 
-// CORRECCIÓN: Definimos la interfaz para que coincida exactamente con lo que PostCard requiere
+// Interfaz alineada con PostCardProps
 interface Post {
-  id: string;
+  id: string; 
   content: string;
   createdAt: string;
   likesCount: number;
@@ -31,7 +31,6 @@ export const Home: React.FC = () => {
 
   const fetchPosts = useCallback(async () => {
     try {
-      console.log("Sincronizando feed con el backend...");
       const url = feedType === 'Siguiendo' && user 
         ? `/posts?currentUser=${user.username}` 
         : '/posts';
@@ -44,16 +43,9 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     fetchPosts();
-
-    const handleGlobalUpdate = () => {
-      fetchPosts();
-    };
-
+    const handleGlobalUpdate = () => fetchPosts();
     window.addEventListener('postCreatedGlobal', handleGlobalUpdate);
-    
-    return () => {
-      window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
-    };
+    return () => window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
   }, [fetchPosts]);
 
   return (
@@ -79,7 +71,6 @@ export const Home: React.FC = () => {
 
       <div className={styles.feedList}>
         {posts.map((post) => (
-          // Ahora TypeScript sabe que 'post' tiene todas las propiedades necesarias
           <PostCard key={post.id} {...post} />
         ))}
       </div>
