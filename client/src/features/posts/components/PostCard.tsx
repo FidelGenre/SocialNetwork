@@ -6,7 +6,6 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import styles from './PostCard.module.css';
 
-// --- UTILIDAD DE FORMATEO DE TIEMPO ---
 const formatTime = (dateString: string) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -20,11 +19,12 @@ const formatTime = (dateString: string) => {
   return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
 };
 
-interface PostCardProps {
-  id: number;
+// CORRECCIÓN: 'id' cambiado a string para coincidir con Home.tsx y evitar error TS2322
+export interface PostCardProps {
+  id: string; 
   content: string;
   imageUrl?: string;
-  createdAt: string; // Fecha enviada por el backend
+  createdAt: string;
   likesCount: number;
   repliesCount: number;
   repostsCount: number;
@@ -54,7 +54,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  const BASE_URL = 'http://localhost:8080';
+  // Cambia esto a tu URL de producción en Render si es necesario
+  const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
   useEffect(() => {
     if (likedByUsers && currentUser) {
@@ -140,7 +141,6 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <div className={styles.cardWrapper} onClick={handleCardClick}>
-      
       {repostFromUserName && (
         <div className={styles.repostHeader}>
           <Repeat2 size={14} color="#71767b" />
