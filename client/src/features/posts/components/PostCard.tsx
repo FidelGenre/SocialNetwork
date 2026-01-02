@@ -6,12 +6,26 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import styles from './PostCard.module.css';
 
-// --- UTILIDAD DE FORMATEO DE TIEMPO ---
+// --- UTILIDAD DE FORMATEO DE TIEMPO CORREGIDA ---
 const formatTime = (dateString: string) => {
   if (!dateString) return '';
+  
+  // new Date() interpreta automáticamente el formato ISO si el backend envía la 'Z' de UTC
   const date = new Date(dateString);
   const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  // Calculamos la diferencia en segundos
+  let diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  /**
+   * CORRECCIÓN DE ZONA HORARIA:
+   * Si el servidor está en UTC y nosotros en UTC-3, la diferencia puede ser negativa (aprox -10800 seg).
+   * Si la diferencia es negativa pero menor a 12 horas (desfase típico), 
+   * asumimos que es un post recién creado y lo tratamos como 0 para que diga 'ahora'.
+   */
+  if (diffInSeconds < 0 && diffInSeconds > -43200) {
+    diffInSeconds = 0;
+  }
 
   if (diffInSeconds < 60) return 'ahora';
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}min`;
@@ -44,11 +58,10 @@ export const PostCard: React.FC<PostCardProps> = ({
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
-  // --- ESTADOS LOCALES PARA INTERACCIÓN INMEDIATA ---
   const [likes, setLikes] = useState(initialLikes);
   const [isLiked, setIsLiked] = useState(false);
   const [reposts, setReposts] = useState(initialReposts);
-  const [isReposted, setIsReposted] = useState(!!repostFromUserName); // Si viene con nombre de repost, está activo
+  const [isReposted, setIsReposted] = useState(!!repostFromUserName);
 
   const [showReplies, setShowReplies] = useState(false);
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
@@ -59,7 +72,6 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
-  // Efecto para inicializar el estado del Like
   useEffect(() => {
     if (likedByUsers && currentUser) {
       const alreadyLiked = likedByUsers.some(u => u.username === currentUser.username);
@@ -67,7 +79,6 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   }, [likedByUsers, currentUser]);
 
-  // Efecto para búsqueda de usuarios al compartir
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 1) {
@@ -100,7 +111,6 @@ export const PostCard: React.FC<PostCardProps> = ({
     navigate(`/post/${id}`);
   };
 
-  // --- LÓGICA DE LIKE ACTUALIZADA ---
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
@@ -111,12 +121,10 @@ export const PostCard: React.FC<PostCardProps> = ({
     } catch (e) { console.error("Error en Like:", e); }
   };
 
-  // --- LÓGICA DE REPOST ACTUALIZADA (TOGGLE) ---
   const handleRepost = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
     try {
-      // Llamamos al nuevo endpoint del backend
       const res = await api.post(`/posts/${id}/repost?username=${currentUser.username}`);
       
       if (res.data.action === "deleted") {
@@ -146,7 +154,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     if (!window.confirm("¿Eliminar este post definitivamente?")) return;
     try {
       await api.delete(`/posts/${id}?username=${currentUser?.username}`);
-      window.location.reload(); // Para el delete, el reload es aceptable para limpiar el feed
+      window.location.reload();
     } catch (e) { console.error("Error al borrar:", e); }
   };
 
@@ -201,13 +209,11 @@ export const PostCard: React.FC<PostCardProps> = ({
           )}
           
           <div className={styles.actions}>
-            {/* BOTÓN COMENTARIOS */}
             <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setIsReplyModalOpen(true); }}>
               <MessageCircle size={18} />
               <span>{repliesCount > 0 ? repliesCount : ''}</span>
             </button>
 
-            {/* BOTÓN REPOST (ACTUALIZADO CON ESTADO) */}
             <button 
               className={styles.actionBtn} 
               onClick={handleRepost}
@@ -217,7 +223,6 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{reposts > 0 ? reposts : ''}</span>
             </button>
             
-            {/* BOTÓN LIKE */}
             <button 
               className={styles.actionBtn} 
               onClick={handleLike} 
@@ -227,7 +232,6 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{likes > 0 ? likes : ''}</span>
             </button>
 
-            {/* BOTÓN COMPARTIR */}
             <div className={styles.shareContainer}>
               <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setShowShareMenu(!showShareMenu); }}>
                 <Send size={18} />
@@ -264,7 +268,6 @@ export const PostCard: React.FC<PostCardProps> = ({
             </div>
           </div>
 
-          {/* SECCIÓN DE RESPUESTAS */}
           {repliesCount > 0 && (
             <button 
               className={styles.viewRepliesBtn} 
