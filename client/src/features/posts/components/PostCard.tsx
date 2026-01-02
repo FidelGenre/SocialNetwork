@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import styles from './PostCard.module.css';
 
+// --- UTILIDAD DE FORMATEO DE TIEMPO ---
 const formatTime = (dateString: string) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -19,19 +20,19 @@ const formatTime = (dateString: string) => {
   return date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
 };
 
-// CORRECCIÓN: 'id' cambiado a string para coincidir con Home.tsx y evitar error TS2322
+// CORRECCIÓN DE TIPOS PARA RENDER: id como string y displayName opcional
 export interface PostCardProps {
   id: string; 
   content: string;
   imageUrl?: string;
-  createdAt: string;
+  createdAt: string; 
   likesCount: number;
   repliesCount: number;
   repostsCount: number;
   repostFromUserName?: string;
   likedByUsers?: { username: string }[]; 
   user?: {
-    displayName: string;
+    displayName?: string; // El '?' evita el error TS2322
     username: string;
     avatarUrl?: string;
   };
@@ -54,7 +55,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  // Cambia esto a tu URL de producción en Render si es necesario
+  // URL de producción para Render
   const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
   useEffect(() => {
@@ -141,6 +142,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   return (
     <div className={styles.cardWrapper} onClick={handleCardClick}>
+      
       {repostFromUserName && (
         <div className={styles.repostHeader}>
           <Repeat2 size={14} color="#71767b" />
@@ -153,14 +155,14 @@ export const PostCard: React.FC<PostCardProps> = ({
           {user?.avatarUrl ? (
             <img src={getFullImageUrl(user.avatarUrl)} alt={user.username} className={styles.avatarImg} />
           ) : (
-            user?.displayName?.charAt(0).toUpperCase() || 'U'
+            (user?.displayName || user?.username || 'U').charAt(0).toUpperCase()
           )}
         </div>
         
         <div className={styles.contentCol}>
           <div className={styles.header}>
             <div className={styles.userInfo}>
-              <span className={styles.displayName}>{user?.displayName || 'Usuario'}</span>
+              <span className={styles.displayName}>{user?.displayName || user?.username || 'Usuario'}</span>
             </div>
 
             <div className={styles.headerRight}>

@@ -6,7 +6,7 @@ import { PostCard } from '../features/posts/components/PostCard';
 import api from '../services/api';
 import styles from './Home.module.css';
 
-// Interfaz alineada con PostCardProps
+// Interfaz alineada exactamente con PostCardProps para evitar errores en Render
 interface Post {
   id: string; 
   content: string;
@@ -14,12 +14,15 @@ interface Post {
   likesCount: number;
   repliesCount: number;
   repostsCount: number;
+  // El signo '?' en displayName es la clave para que tsc no falle
   user: {
     username: string;
-    displayName?: string;
+    displayName?: string; 
     avatarUrl?: string;
   };
   imageUrl?: string;
+  repostFromUserName?: string;
+  likedByUsers?: { username: string }[];
   [key: string]: any; 
 }
 
@@ -43,23 +46,38 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     fetchPosts();
-    const handleGlobalUpdate = () => fetchPosts();
+    
+    // Listener para actualizaciones globales (botón de postear en el layout)
+    const handleGlobalUpdate = () => {
+      fetchPosts();
+    };
+
     window.addEventListener('postCreatedGlobal', handleGlobalUpdate);
-    return () => window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
+    return () => {
+      window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
+    };
   }, [fetchPosts]);
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.selectorWrapper}>
-          <button className={styles.feedSelector} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+          <button 
+            className={styles.feedSelector} 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
             <span>{feedType}</span>
             <ChevronDown size={16} className={isDropdownOpen ? styles.rotate : ''} />
           </button>
+          
           {isDropdownOpen && (
             <div className={styles.dropdown}>
-              <button onClick={() => { setFeedType('Para ti'); setIsDropdownOpen(false); }}>Para ti</button>
-              <button onClick={() => { setFeedType('Siguiendo'); setIsDropdownOpen(false); }}>Siguiendo</button>
+              <button onClick={() => { setFeedType('Para ti'); setIsDropdownOpen(false); }}>
+                Para ti
+              </button>
+              <button onClick={() => { setFeedType('Siguiendo'); setIsDropdownOpen(false); }}>
+                Siguiendo
+              </button>
             </div>
           )}
         </div>
