@@ -6,11 +6,20 @@ import { PostCard } from '../features/posts/components/PostCard';
 import api from '../services/api';
 import styles from './Home.module.css';
 
-// Define una interfaz básica para tus posts según tu backend
+// CORRECCIÓN: Definimos la interfaz para que coincida exactamente con lo que PostCard requiere
 interface Post {
   id: string;
   content: string;
-  // Añade aquí los campos que devuelva tu API
+  createdAt: string;
+  likesCount: number;
+  repliesCount: number;
+  repostsCount: number;
+  user: {
+    username: string;
+    displayName?: string;
+    avatarUrl?: string;
+  };
+  imageUrl?: string;
   [key: string]: any; 
 }
 
@@ -34,10 +43,8 @@ export const Home: React.FC = () => {
   }, [feedType, user]);
 
   useEffect(() => {
-    // Carga inicial
     fetchPosts();
 
-    // Listener para el evento disparado desde el Layout u otros componentes
     const handleGlobalUpdate = () => {
       fetchPosts();
     };
@@ -72,6 +79,7 @@ export const Home: React.FC = () => {
 
       <div className={styles.feedList}>
         {posts.map((post) => (
+          // Ahora TypeScript sabe que 'post' tiene todas las propiedades necesarias
           <PostCard key={post.id} {...post} />
         ))}
       </div>

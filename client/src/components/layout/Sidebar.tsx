@@ -10,6 +10,13 @@ import styles from './Sidebar.module.css';
 import logoWhite from '../../assets/box.png'; 
 import logoBlack from '../../assets/766753.png'; 
 
+// Definimos una interfaz básica para la actividad para evitar el error de any implícito
+interface Activity {
+  type: string;
+  read: boolean;
+  [key: string]: any;
+}
+
 export const Sidebar = () => {
   const { user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,10 +47,14 @@ export const Sidebar = () => {
     const checkNotifications = async () => {
       try {
         const res = await api.get(`/activities/${user.username}`);
-        const activities = res.data;
-        setHasUnreadMessages(activities.some((a) => a.type === 'MESSAGE' && !a.read));
-        setHasUnreadActivity(activities.some((a) => a.type !== 'MESSAGE' && !a.read));
-      } catch (e) {}
+        const activities: Activity[] = res.data;
+        
+        // CORRECCIÓN TS7006: Tipamos explícitamente el parámetro 'a'
+        setHasUnreadMessages(activities.some((a: Activity) => a.type === 'MESSAGE' && !a.read));
+        setHasUnreadActivity(activities.some((a: Activity) => a.type !== 'MESSAGE' && !a.read));
+      } catch (e) {
+        console.error("Error al verificar notificaciones");
+      }
     };
     checkNotifications();
     const interval = setInterval(checkNotifications, 10000);
@@ -60,7 +71,6 @@ export const Sidebar = () => {
 
   return (
     <aside className={styles.sidebar}>
-      {/* Sección Superior: Solo visible en Escritorio */}
       <div className={styles.topSection}>
         <div className={styles.logo}>
           <img 
@@ -71,7 +81,6 @@ export const Sidebar = () => {
         </div>
       </div>
 
-      {/* Navegación: Se vuelve horizontal en móvil */}
       <nav className={styles.navSection}>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -93,7 +102,6 @@ export const Sidebar = () => {
         })}
       </nav>
 
-      {/* Sección Inferior: Menú de opciones (Hamburguesa) */}
       <div className={styles.bottomSection}>
         {isMenuOpen && <div className={styles.optionsWrapper}><OptionsMenu /></div>}
         <button className={styles.menuBtn} onClick={() => setIsMenuOpen(!isMenuOpen)}>
