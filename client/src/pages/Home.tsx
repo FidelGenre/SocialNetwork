@@ -6,23 +6,10 @@ import { PostCard } from '../features/posts/components/PostCard';
 import api from '../services/api';
 import styles from './Home.module.css';
 
-// Interfaz alineada exactamente con PostCardProps para evitar errores en Render
+// Interfaz para tipado de posts
 interface Post {
-  id: string; 
+  id: string;
   content: string;
-  createdAt: string;
-  likesCount: number;
-  repliesCount: number;
-  repostsCount: number;
-  // El signo '?' en displayName es la clave para que tsc no falle
-  user: {
-    username: string;
-    displayName?: string; 
-    avatarUrl?: string;
-  };
-  imageUrl?: string;
-  repostFromUserName?: string;
-  likedByUsers?: { username: string }[];
   [key: string]: any; 
 }
 
@@ -32,6 +19,7 @@ export const Home: React.FC = () => {
   const [feedType, setFeedType] = useState<'Para ti' | 'Siguiendo'>('Para ti');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
+  // Sincronización con el backend en Render
   const fetchPosts = useCallback(async () => {
     try {
       const url = feedType === 'Siguiendo' && user 
@@ -46,13 +34,11 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     fetchPosts();
-    
-    // Listener para actualizaciones globales (botón de postear en el layout)
-    const handleGlobalUpdate = () => {
-      fetchPosts();
-    };
 
+    // Listener para actualizaciones globales (creación de posts)
+    const handleGlobalUpdate = () => fetchPosts();
     window.addEventListener('postCreatedGlobal', handleGlobalUpdate);
+    
     return () => {
       window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
     };
@@ -60,37 +46,37 @@ export const Home: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <div className={styles.selectorWrapper}>
-          <button 
-            className={styles.feedSelector} 
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <span>{feedType}</span>
-            <ChevronDown size={16} className={isDropdownOpen ? styles.rotate : ''} />
-          </button>
-          
-          {isDropdownOpen && (
-            <div className={styles.dropdown}>
-              <button onClick={() => { setFeedType('Para ti'); setIsDropdownOpen(false); }}>
-                Para ti
-              </button>
-              <button onClick={() => { setFeedType('Siguiendo'); setIsDropdownOpen(false); }}>
-                Siguiendo
-              </button>
-            </div>
-          )}
+      {/* mainWrapper es la caja central que contiene el feed */}
+      <div className={styles.mainWrapper}>
+        <header className={styles.header}>
+          <div className={styles.selectorWrapper}>
+            <button className={styles.feedSelector} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <span>{feedType}</span>
+              <ChevronDown size={16} className={isDropdownOpen ? styles.rotate : ''} />
+            </button>
+            
+            {isDropdownOpen && (
+              <div className={styles.dropdown}>
+                <button onClick={() => { setFeedType('Para ti'); setIsDropdownOpen(false); }}>
+                  Para ti
+                </button>
+                <button onClick={() => { setFeedType('Siguiendo'); setIsDropdownOpen(false); }}>
+                  Siguiendo
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <div className={styles.editorSection}>
+          <PostEditor onPostCreated={fetchPosts} />
         </div>
-      </header>
 
-      <div className={styles.editorSection}>
-        <PostEditor onPostCreated={fetchPosts} />
-      </div>
-
-      <div className={styles.feedList}>
-        {posts.map((post) => (
-          <PostCard key={post.id} {...post} />
-        ))}
+        <div className={styles.feedList}>
+          {posts.map((post) => (
+            <PostCard key={post.id} {...post} />
+          ))}
+        </div>
       </div>
     </div>
   );

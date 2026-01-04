@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type FormEvent } from 'react';
 import { Heart, MessageCircle, Repeat2, Send, Trash2, Search, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CreatePostModal } from './CreatePostModal';
@@ -6,23 +6,14 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import styles from './PostCard.module.css';
 
-// --- UTILIDAD DE FORMATEO DE TIEMPO CORREGIDA ---
+// --- UTILIDAD DE FORMATEO DE TIEMPO CON CORRECCIÓN DE ZONA HORARIA ---
 const formatTime = (dateString: string) => {
   if (!dateString) return '';
-  
-  // new Date() interpreta automáticamente el formato ISO si el backend envía la 'Z' de UTC
   const date = new Date(dateString);
   const now = new Date();
-  
-  // Calculamos la diferencia en segundos
   let diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  /**
-   * CORRECCIÓN DE ZONA HORARIA:
-   * Si el servidor está en UTC y nosotros en UTC-3, la diferencia puede ser negativa (aprox -10800 seg).
-   * Si la diferencia es negativa pero menor a 12 horas (desfase típico), 
-   * asumimos que es un post recién creado y lo tratamos como 0 para que diga 'ahora'.
-   */
+  // Ajuste para desfases de servidor (UTC vs Local)
   if (diffInSeconds < 0 && diffInSeconds > -43200) {
     diffInSeconds = 0;
   }
@@ -58,20 +49,21 @@ export const PostCard: React.FC<PostCardProps> = ({
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
+  // Estados de interacción
   const [likes, setLikes] = useState(initialLikes);
   const [isLiked, setIsLiked] = useState(false);
   const [reposts, setReposts] = useState(initialReposts);
   const [isReposted, setIsReposted] = useState(!!repostFromUserName);
 
-  const [showReplies, setShowReplies] = useState(false);
+  // Estados de UI
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
-  const [replies, setReplies] = useState<PostCardProps[]>([]);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
   const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
+  // Sincronizar estado de Like
   useEffect(() => {
     if (likedByUsers && currentUser) {
       const alreadyLiked = likedByUsers.some(u => u.username === currentUser.username);
@@ -79,15 +71,14 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   }, [likedByUsers, currentUser]);
 
+  // Buscador de usuarios para compartir
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 1) {
         try {
           const res = await api.get(`/users/search?q=${searchQuery}`);
           setSearchResults(res.data);
-        } catch (e) {
-          console.error("Error buscando usuarios:", e);
-        }
+        } catch (e) { console.error("Error buscando usuarios:", e); }
       } else {
         setSearchResults([]);
       }
@@ -107,7 +98,8 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest(`.${styles.replySection}`) || target.closest(`.${styles.shareMenu}`)) return;
+    // Evita navegar al detalle si se toca un botón, el modal o el menú de compartir
+    if (target.closest('button') || target.closest(`.${styles.shareMenu}`)) return;
     navigate(`/post/${id}`);
   };
 
@@ -126,7 +118,6 @@ export const PostCard: React.FC<PostCardProps> = ({
     if (!currentUser) return;
     try {
       const res = await api.post(`/posts/${id}/repost?username=${currentUser.username}`);
-      
       if (res.data.action === "deleted") {
         setReposts(prev => Math.max(0, prev - 1));
         setIsReposted(false);
@@ -134,9 +125,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         setReposts(prev => prev + 1);
         setIsReposted(true);
       }
-    } catch (e) { 
-      console.error("Error en Repost:", e); 
-    }
+    } catch (e) { console.error("Error en Repost:", e); }
   };
 
   const handleSharePost = async (targetUsername: string) => {
@@ -158,13 +147,6 @@ export const PostCard: React.FC<PostCardProps> = ({
     } catch (e) { console.error("Error al borrar:", e); }
   };
 
-  const fetchReplies = async () => {
-    try {
-      const response = await api.get(`/posts/${id}/replies`);
-      setReplies(response.data);
-    } catch (e) { console.error("Error al cargar respuestas:", e); }
-  };
-
   return (
     <div className={styles.cardWrapper} onClick={handleCardClick}>
       
@@ -176,11 +158,14 @@ export const PostCard: React.FC<PostCardProps> = ({
       )}
 
       <div className={styles.card}>
+        {/* Avatar con enlace al perfil */}
         <div className={styles.avatar} onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
           {user?.avatarUrl ? (
             <img src={getFullImageUrl(user.avatarUrl)} alt={user.username} className={styles.avatarImg} />
           ) : (
-            (user?.displayName || user?.username || 'U').charAt(0).toUpperCase()
+            <div className={styles.avatarPlaceholder}>
+              {(user?.displayName || user?.username || 'U').charAt(0).toUpperCase()}
+            </div>
           )}
         </div>
         
@@ -188,6 +173,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           <div className={styles.header}>
             <div className={styles.userInfo} onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
               <span className={styles.displayName}>{user?.displayName || user?.username || 'Usuario'}</span>
+              <span className={styles.username}>@{user?.username}</span>
             </div>
 
             <div className={styles.headerRight}>
@@ -209,11 +195,13 @@ export const PostCard: React.FC<PostCardProps> = ({
           )}
           
           <div className={styles.actions}>
+            {/* Botón de Comentario (abre el modal de respuesta) */}
             <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setIsReplyModalOpen(true); }}>
               <MessageCircle size={18} />
               <span>{repliesCount > 0 ? repliesCount : ''}</span>
             </button>
 
+            {/* Botón de Repost con estado dinámico */}
             <button 
               className={styles.actionBtn} 
               onClick={handleRepost}
@@ -223,6 +211,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{reposts > 0 ? reposts : ''}</span>
             </button>
             
+            {/* Botón de Like con estado dinámico */}
             <button 
               className={styles.actionBtn} 
               onClick={handleLike} 
@@ -232,6 +221,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{likes > 0 ? likes : ''}</span>
             </button>
 
+            {/* Menú de Compartir */}
             <div className={styles.shareContainer}>
               <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setShowShareMenu(!showShareMenu); }}>
                 <Send size={18} />
@@ -267,23 +257,6 @@ export const PostCard: React.FC<PostCardProps> = ({
               )}
             </div>
           </div>
-
-          {repliesCount > 0 && (
-            <button 
-              className={styles.viewRepliesBtn} 
-              onClick={(e) => { e.stopPropagation(); if(!showReplies) fetchReplies(); setShowReplies(!showReplies); }}
-            >
-              {showReplies ? 'Ocultar respuestas' : `Ver respuestas (${repliesCount})`}
-            </button>
-          )}
-
-          {showReplies && (
-            <div className={styles.replySection}>
-              {replies.map(reply => (
-                <PostCard key={reply.id} {...reply} />
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -291,7 +264,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         <CreatePostModal 
           parentId={id} 
           onClose={() => setIsReplyModalOpen(false)} 
-          onPost={() => { fetchReplies(); setShowReplies(true); }} 
+          onPost={() => window.location.reload()} 
         />
       )}
     </div>

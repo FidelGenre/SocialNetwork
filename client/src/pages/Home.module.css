@@ -1,23 +1,32 @@
 .container {
-  /* Eliminamos el max-width: 600px que bloqueaba todo */
-  width: 45vh !important;
-  max-width: 100% !important; 
-  margin: 0;
+  width: 100%;
+  min-height: 100vh;
   background-color: var(--bg-color);
   display: flex;
+  justify-content: center; /* Centra la caja horizontalmente */
+}
+
+/* Caja principal del feed (estilo Threads) */
+.mainWrapper {
+  width: 100%;
+  max-width: 640px; /* Ancho estándar para feeds de una sola columna */
+  background-color: var(--bg-color);
+  border-left: 1px solid var(--border-main);
+  border-right: 1px solid var(--border-main);
+  display: flex;
   flex-direction: column;
-  align-items: center; /* Centra el contenido si el layout es más ancho que los posts */
 }
 
 .header {
-  width: 100%; /* El header ahora ocupa todo el ancho */
+  width: 100%;
   height: 60px;
   display: flex;
   justify-content: center;
   align-items: center;
   position: sticky;
   top: 0;
-  background-color: var(--bg-color); 
+  background-color: rgba(0, 0, 0, 0.85); /* Fondo traslúcido para el scroll */
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-main);
   z-index: 100;
 }
@@ -31,10 +40,18 @@
   background: none;
   border: none;
   font-weight: 700;
+  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: background 0.2s;
+}
+
+.feedSelector:hover {
+  background-color: var(--bg-secondary);
 }
 
 .rotate {
@@ -43,33 +60,37 @@
 
 .dropdown {
   position: absolute;
-  top: 110%;
+  top: 105%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: var(--bg-secondary);
+  background-color: #000000;
   border: 1px solid var(--border-main);
-  border-radius: 14px;
-  padding: 6px;
-  width: 160px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  border-radius: 16px;
+  padding: 8px;
+  width: 180px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
 }
 
 .dropdown button {
   width: 100%;
-  padding: 12px;
+  padding: 12px 16px;
   background: none;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   text-align: left;
   font-weight: 600;
   cursor: pointer;
   border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.dropdown button:hover {
+  background-color: var(--bg-secondary);
 }
 
 .editorSection {
   width: 100%;
-  /* Aquí puedes controlar el ancho máximo visual de la zona de escritura */
-  max-width: 100%; 
+  padding: 16px;
   border-bottom: 1px solid var(--border-main);
 }
 
@@ -77,42 +98,19 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centra los posts dentro de la lista */
 }
 
-/* Forzamos que cada tarjeta de post ocupe el ancho disponible */
+/* Estilo para cada PostCard dentro de la lista */
 .feedList > * {
   width: 100% !important;
+  border-bottom: 1px solid var(--border-main); /* Línea separadora entre cada post */
 }
 
-/* BOTÓN FLOTANTE */
-.floatingAddBtn {
-  position: fixed;
-  bottom: 85px; 
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-main);
-  border-radius: 12px;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  z-index: 2100; 
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-@media (min-width: 768px) {
-  .floatingAddBtn {
-    bottom: 40px;
-    right: 40px;
+/* Ajustes para móviles */
+@media (max-width: 640px) {
+  .mainWrapper {
+    max-width: 100%;
+    border-left: none;
+    border-right: none;
   }
-}
-
-.floatingAddBtn:hover {
-  background-color: var(--border-main);
-  transform: scale(1.05);
 }

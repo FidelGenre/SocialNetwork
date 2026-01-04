@@ -47,7 +47,8 @@ export const PostView = () => {
 
       <div className={styles.content}>
         <div className={styles.mainPost}>
-          <PostCard {...mainPost} />
+          {/* PASAMOS LA PROP hideViewReplies EN TRUE PARA EL POST PRINCIPAL */}
+          <PostCard {...mainPost} hideViewReplies={true} />
         </div>
 
         <div className={styles.divider}>Respuestas</div>
