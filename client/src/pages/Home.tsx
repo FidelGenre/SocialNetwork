@@ -6,11 +6,22 @@ import { PostCard } from '../features/posts/components/PostCard';
 import api from '../services/api';
 import styles from './Home.module.css';
 
-// Interfaz para tipado de posts
+// MODIFICADO: La interfaz ahora incluye los campos que TypeScript reclama
 interface Post {
   id: string;
   content: string;
-  [key: string]: any; 
+  createdAt: string;
+  likesCount: number;
+  repliesCount: number;
+  repostsCount: number;
+  imageUrl?: string;
+  repostFromUserName?: string;
+  likedByUsers?: { username: string }[];
+  user?: {
+    displayName?: string;
+    username: string;
+    avatarUrl?: string;
+  };
 }
 
 export const Home: React.FC = () => {
@@ -19,7 +30,7 @@ export const Home: React.FC = () => {
   const [feedType, setFeedType] = useState<'Para ti' | 'Siguiendo'>('Para ti');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
-  // Sincronización con el backend en Render
+  // URL de producción en Render
   const fetchPosts = useCallback(async () => {
     try {
       const url = feedType === 'Siguiendo' && user 
@@ -34,19 +45,13 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     fetchPosts();
-
-    // Listener para actualizaciones globales (creación de posts)
     const handleGlobalUpdate = () => fetchPosts();
     window.addEventListener('postCreatedGlobal', handleGlobalUpdate);
-    
-    return () => {
-      window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
-    };
+    return () => window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
   }, [fetchPosts]);
 
   return (
     <div className={styles.container}>
-      {/* mainWrapper es la caja central que contiene el feed */}
       <div className={styles.mainWrapper}>
         <header className={styles.header}>
           <div className={styles.selectorWrapper}>
@@ -54,15 +59,10 @@ export const Home: React.FC = () => {
               <span>{feedType}</span>
               <ChevronDown size={16} className={isDropdownOpen ? styles.rotate : ''} />
             </button>
-            
             {isDropdownOpen && (
               <div className={styles.dropdown}>
-                <button onClick={() => { setFeedType('Para ti'); setIsDropdownOpen(false); }}>
-                  Para ti
-                </button>
-                <button onClick={() => { setFeedType('Siguiendo'); setIsDropdownOpen(false); }}>
-                  Siguiendo
-                </button>
+                <button onClick={() => { setFeedType('Para ti'); setIsDropdownOpen(false); }}>Para ti</button>
+                <button onClick={() => { setFeedType('Siguiendo'); setIsDropdownOpen(false); }}>Siguiendo</button>
               </div>
             )}
           </div>
@@ -74,6 +74,7 @@ export const Home: React.FC = () => {
 
         <div className={styles.feedList}>
           {posts.map((post) => (
+            // Ahora TypeScript sabe que 'post' tiene todas las propiedades necesarias
             <PostCard key={post.id} {...post} />
           ))}
         </div>
