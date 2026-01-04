@@ -6,7 +6,7 @@ import { PostCard } from '../features/posts/components/PostCard';
 import api from '../services/api';
 import styles from './Home.module.css';
 
-// MODIFICADO: La interfaz ahora incluye los campos que TypeScript reclama
+// Interfaz completa para satisfacer los requisitos de PostCard y el build de Render
 interface Post {
   id: string;
   content: string;
@@ -30,7 +30,7 @@ export const Home: React.FC = () => {
   const [feedType, setFeedType] = useState<'Para ti' | 'Siguiendo'>('Para ti');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
-  // URL de producción en Render
+  // Sincronización con el backend en Render
   const fetchPosts = useCallback(async () => {
     try {
       const url = feedType === 'Siguiendo' && user 
@@ -47,7 +47,9 @@ export const Home: React.FC = () => {
     fetchPosts();
     const handleGlobalUpdate = () => fetchPosts();
     window.addEventListener('postCreatedGlobal', handleGlobalUpdate);
-    return () => window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
+    return () => {
+      window.removeEventListener('postCreatedGlobal', handleGlobalUpdate);
+    };
   }, [fetchPosts]);
 
   return (
@@ -74,7 +76,6 @@ export const Home: React.FC = () => {
 
         <div className={styles.feedList}>
           {posts.map((post) => (
-            // Ahora TypeScript sabe que 'post' tiene todas las propiedades necesarias
             <PostCard key={post.id} {...post} />
           ))}
         </div>

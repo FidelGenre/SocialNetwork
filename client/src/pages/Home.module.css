@@ -3,18 +3,23 @@
   min-height: 100vh;
   background-color: var(--bg-color);
   display: flex;
-  justify-content: center; /* Centra la caja horizontalmente */
+  justify-content: center;
+  padding: 0 10px;
 }
 
-/* Caja principal del feed (estilo Threads) */
+/* Caja principal del feed con el cierre superior */
 .mainWrapper {
   width: 100%;
-  max-width: 640px; /* Ancho estándar para feeds de una sola columna */
+  max-width: 640px;
   background-color: var(--bg-color);
+  /* Se añade border-top para cerrar la línea arriba */
+  border-top: 1px solid var(--border-main); 
   border-left: 1px solid var(--border-main);
   border-right: 1px solid var(--border-main);
   display: flex;
   flex-direction: column;
+  margin-top: 20px; /* Espacio opcional para que se vea el borde superior */
+  border-radius: 16px 16px 0 0; /* Opcional: redondea las esquinas superiores */
 }
 
 .header {
@@ -25,10 +30,11 @@
   align-items: center;
   position: sticky;
   top: 0;
-  background-color: rgba(0, 0, 0, 0.85); /* Fondo traslúcido para el scroll */
+  background-color: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-main);
   z-index: 100;
+  border-radius: 16px 16px 0 0; /* Mantiene la forma redondeada si se usa */
 }
 
 .selectorWrapper {
@@ -47,11 +53,6 @@
   gap: 6px;
   padding: 8px 16px;
   border-radius: 20px;
-  transition: background 0.2s;
-}
-
-.feedSelector:hover {
-  background-color: var(--bg-secondary);
 }
 
 .rotate {
@@ -81,11 +82,6 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: 10px;
-  transition: background 0.2s;
-}
-
-.dropdown button:hover {
-  background-color: var(--bg-secondary);
 }
 
 .editorSection {
@@ -100,17 +96,15 @@
   flex-direction: column;
 }
 
-/* Estilo para cada PostCard dentro de la lista */
 .feedList > * {
   width: 100% !important;
-  border-bottom: 1px solid var(--border-main); /* Línea separadora entre cada post */
+  border-bottom: 1px solid var(--border-main);
 }
 
-/* Ajustes para móviles */
 @media (max-width: 640px) {
   .mainWrapper {
-    max-width: 100%;
-    border-left: none;
-    border-right: none;
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
   }
 }
