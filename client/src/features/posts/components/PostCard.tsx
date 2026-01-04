@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type FormEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Repeat2, Send, Trash2, Search, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CreatePostModal } from './CreatePostModal';
@@ -6,14 +6,13 @@ import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
 import styles from './PostCard.module.css';
 
-// --- UTILIDAD DE FORMATEO DE TIEMPO CON CORRECCIÓN DE ZONA HORARIA ---
+// --- UTILIDAD DE FORMATEO DE TIEMPO CORREGIDA ---
 const formatTime = (dateString: string) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();
   let diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  // Ajuste para desfases de servidor (UTC vs Local)
   if (diffInSeconds < 0 && diffInSeconds > -43200) {
     diffInSeconds = 0;
   }
@@ -49,13 +48,11 @@ export const PostCard: React.FC<PostCardProps> = ({
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
-  // Estados de interacción
   const [likes, setLikes] = useState(initialLikes);
   const [isLiked, setIsLiked] = useState(false);
   const [reposts, setReposts] = useState(initialReposts);
   const [isReposted, setIsReposted] = useState(!!repostFromUserName);
 
-  // Estados de UI
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,7 +60,6 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   const BASE_URL = 'https://socialnetworkserver-3kyu.onrender.com';
 
-  // Sincronizar estado de Like
   useEffect(() => {
     if (likedByUsers && currentUser) {
       const alreadyLiked = likedByUsers.some(u => u.username === currentUser.username);
@@ -71,14 +67,15 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   }, [likedByUsers, currentUser]);
 
-  // Buscador de usuarios para compartir
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 1) {
         try {
           const res = await api.get(`/users/search?q=${searchQuery}`);
           setSearchResults(res.data);
-        } catch (e) { console.error("Error buscando usuarios:", e); }
+        } catch (e) {
+          console.error("Error buscando usuarios:", e);
+        }
       } else {
         setSearchResults([]);
       }
@@ -98,7 +95,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // Evita navegar al detalle si se toca un botón, el modal o el menú de compartir
+    // Evita navegar al detalle si se toca un botón o el menú de compartir
     if (target.closest('button') || target.closest(`.${styles.shareMenu}`)) return;
     navigate(`/post/${id}`);
   };
@@ -158,14 +155,11 @@ export const PostCard: React.FC<PostCardProps> = ({
       )}
 
       <div className={styles.card}>
-        {/* Avatar con enlace al perfil */}
         <div className={styles.avatar} onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
           {user?.avatarUrl ? (
             <img src={getFullImageUrl(user.avatarUrl)} alt={user.username} className={styles.avatarImg} />
           ) : (
-            <div className={styles.avatarPlaceholder}>
-              {(user?.displayName || user?.username || 'U').charAt(0).toUpperCase()}
-            </div>
+            (user?.displayName || user?.username || 'U').charAt(0).toUpperCase()
           )}
         </div>
         
@@ -195,13 +189,11 @@ export const PostCard: React.FC<PostCardProps> = ({
           )}
           
           <div className={styles.actions}>
-            {/* Botón de Comentario (abre el modal de respuesta) */}
             <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setIsReplyModalOpen(true); }}>
               <MessageCircle size={18} />
               <span>{repliesCount > 0 ? repliesCount : ''}</span>
             </button>
 
-            {/* Botón de Repost con estado dinámico */}
             <button 
               className={styles.actionBtn} 
               onClick={handleRepost}
@@ -211,7 +203,6 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{reposts > 0 ? reposts : ''}</span>
             </button>
             
-            {/* Botón de Like con estado dinámico */}
             <button 
               className={styles.actionBtn} 
               onClick={handleLike} 
@@ -221,7 +212,6 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{likes > 0 ? likes : ''}</span>
             </button>
 
-            {/* Menú de Compartir */}
             <div className={styles.shareContainer}>
               <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setShowShareMenu(!showShareMenu); }}>
                 <Send size={18} />
