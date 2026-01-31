@@ -18,7 +18,7 @@ import java.util.Map;
  * Incluye PATCH para marcar notificaciones como leídas.
  */
 @CrossOrigin(
-    origins = {"https://socialnetwork-m3m4.onrender.com"},
+    origins = {"https://socialnetwork-m3m4.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.PATCH, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )

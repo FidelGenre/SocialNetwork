@@ -17,7 +17,7 @@ import java.util.*;
  * Se incluye PATCH para la funcionalidad de "marcar como leído".
  */
 @CrossOrigin(
-    origins = {"https://socialnetwork-m3m4.onrender.com"},
+    origins = {"https://socialnetwork-m3m4.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PATCH, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )

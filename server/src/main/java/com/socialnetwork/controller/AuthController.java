@@ -16,7 +16,7 @@ import java.util.Map;
  * Soporta los métodos necesarios para la autenticación y las pre-consultas del navegador.
  */
 @CrossOrigin(
-    origins = {"https://socialnetwork-m3m4.onrender.com"},
+    origins = {"https://socialnetwork-m3m4.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.POST, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )

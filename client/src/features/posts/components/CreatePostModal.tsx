@@ -1,145 +1,52 @@
-import React, { useState, useRef } from 'react';
-import { X, Image as ImageIcon } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
-import api from '../../../services/api';
-import styles from './CreatePostModal.module.css';
+"use client";
+
+import React from 'react';
+import { X } from 'lucide-react';
+import { PostEditor } from './PostEditor';
 
 interface CreatePostModalProps {
-  // CORRECCIÓN: parentId ahora es string para ser compatible con PostCard y Home
-  parentId?: string; 
   onClose: () => void;
-  onPost: () => void;
+  onPost?: () => void;
+  parentId?: string;
 }
 
-export const CreatePostModal: React.FC<CreatePostModalProps> = ({ parentId, onClose, onPost }) => {
-  const { user } = useAuth();
-  const [content, setContent] = useState('');
-  
-  // Estados para el archivo y su vista previa
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  
-  // Referencia para el input de tipo file oculto
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
-
-  const removeImage = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if ((!content.trim() && !selectedFile) || !user) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('content', content);
-      // Enviamos el username en el FormData para el backend en Spring Boot
-      formData.append('username', user.username);
-      
-      if (selectedFile) {
-        formData.append('file', selectedFile);
-      }
-      
-      // La interpolación de parentId funciona correctamente siendo string
-      const url = parentId ? `/posts?parentId=${parentId}` : '/posts';
-      
-      await api.post(url, formData);
-      
-      onPost();
+export const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPost, parentId }) => {
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
       onClose();
-    } catch (error) {
-      console.error("Error al publicar:", error);
-      alert("No se pudo publicar el hilo.");
     }
   };
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <div className={styles.header}>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Cerrar">
-            <X size={20} />
-          </button>
-          <span className={styles.headerTitle}>
-            {parentId ? 'Responder' : 'Nuevo hilo'}
-          </span>
-          <div style={{ width: 28 }}></div>
+    <div 
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 backdrop-blur-sm pt-20 px-4 animate-in fade-in duration-200"
+      onClick={handleOverlayClick}
+    >
+      {/* CAMBIO: bg-background, border-border-color y text-foreground */}
+      <div className="bg-background border border-border-color w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200">
+        
+        {/* Header del Modal */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border-color">
+            <button 
+                onClick={onClose} 
+                className="p-2 -ml-2 rounded-full text-foreground hover:bg-hover-bg transition-colors"
+            >
+                <X size={20} />
+            </button>
+            
+            <div className="font-bold text-foreground">Nuevo hilo</div>
+            <div className="w-8"></div> 
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formBody}>
-          <div className={styles.mainContainer}>
-            {/* Columna Izquierda: Avatar y Línea de hilo */}
-            <div className={styles.leftColumn}>
-              <div className={styles.avatar}>
-                {user?.displayName?.charAt(0).toUpperCase() || 'U'}
-              </div>
-              {parentId && <div className={styles.connectorLine}></div>}
-            </div>
-
-            {/* Columna Derecha: Contenido */}
-            <div className={styles.rightColumn}>
-              <div className={styles.userInfo}>
-                <span className={styles.username}>{user?.username}</span>
-              </div>
-              
-              <textarea
-                placeholder={parentId ? "Publica tu respuesta" : "¿Qué hay de nuevo?"}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className={styles.textarea}
-                autoFocus
-              />
-
-              {/* Vista previa de imagen seleccionada */}
-              {previewUrl && (
-                <div className={styles.imagePreviewContainer}>
-                  <img src={previewUrl} alt="Preview" className={styles.previewImg} />
-                  <button type="button" className={styles.removeImgBtn} onClick={removeImage}>
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-
-              <div className={styles.actionIcons}>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  ref={fileInputRef} 
-                  style={{ display: 'none' }} 
-                  onChange={handleFileChange}
-                />
-                
-                <button 
-                  type="button" 
-                  className={styles.iconBtn}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <ImageIcon size={18} color={selectedFile ? '#0084ff' : '#777'} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.footer}>
-            <button 
-              type="submit" 
-              className={styles.postBtn}
-              disabled={!content.trim() && !selectedFile}
-            >
-              Publicar
-            </button>
-          </div>
-        </form>
+        <div className="p-0">
+            <PostEditor 
+                onPostCreated={() => {
+                    if(onPost) onPost();
+                    onClose();
+                }} 
+                className="border-none bg-transparent" // Aseguramos que sea transparente
+            />
+        </div>
       </div>
     </div>
   );

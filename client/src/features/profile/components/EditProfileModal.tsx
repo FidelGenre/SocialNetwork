@@ -1,6 +1,8 @@
+"use client";
+
 import React, { useState, useRef } from 'react';
-import api from '../../../services/api';
-import styles from './EditProfileModal.module.css';
+import { X, Camera } from 'lucide-react';
+import api from '@/lib/api'; // Ajusta la ruta de tu api
 
 interface EditProfileModalProps {
   user: any;
@@ -9,120 +11,126 @@ interface EditProfileModalProps {
 }
 
 export const EditProfileModal = ({ user, onClose, onUpdate }: EditProfileModalProps) => {
-  const [displayName, setDisplayName] = useState(user.displayName);
+  const [displayName, setDisplayName] = useState(user.displayName || '');
   const [bio, setBio] = useState(user.bio || '');
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Gestión de imagen
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState(user.avatarUrl || '');
+  const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Determinar URL de imagen (si es blob local o del servidor)
+  const currentAvatar = user.avatarUrl && !preview
+    ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : `https://socialnetworkserver-3kyu.onrender.com${user.avatarUrl}`)
+    : preview;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedFile(file);
-      // Crea una URL temporal para previsualización inmediata
       setPreview(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      // 1. Actualizar texto (DisplayName y Bio)
+      // 1. Actualizar Datos
       await api.put(`/users/${user.username}`, { displayName, bio });
       
-      // 2. Actualizar Avatar (solo si hay un archivo nuevo seleccionado)
+      // 2. Actualizar Foto (si hubo cambio)
       if (selectedFile) {
         const formData = new FormData();
         formData.append('file', selectedFile);
-
         await api.patch(`/users/${user.username}/avatar`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
       }
       
-      onUpdate(); // Refresca los datos en el perfil
-      onClose();  // Cierra el modal
+      onUpdate();
+      onClose();
     } catch (error) {
-      console.error("Error al actualizar perfil:", error);
-      alert("No se pudo actualizar el perfil. Revisa la consola.");
+      console.error("Error actualizando perfil:", error);
+      alert("Error al guardar los cambios.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getFullImageUrl = (path: string) => {
-    if (!path) return '';
-    if (path.startsWith('blob:')) return path; // Imagen local temporal
-    return `http://localhost:8080${path}`;      // Imagen del servidor
-  };
-
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <div className={styles.modalHeader}>
-          <h2>Editar perfil</h2>
-          <button onClick={onClose} className={styles.closeBtn}>&times;</button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+      <div className="bg-background border border-border-color w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative animate-in zoom-in-95">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border-color">
+             <span className="font-bold text-lg">Editar perfil</span>
+             <button onClick={onClose} className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10">
+                <X size={20} />
+             </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {/* SECCIÓN DE AVATAR CIRCULAR */}
-          <div className={styles.avatarContainer}>
-            <div 
-              className={styles.avatarWrapper} 
-              onClick={() => fileInputRef.current?.click()}
-              title="Click para cambiar foto"
-            >
-              {preview ? (
-                <img src={getFullImageUrl(preview)} alt="Avatar" className={styles.previewImg} />
-              ) : (
-                <div className={styles.placeholderAvatar}>
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className={styles.cameraIcon}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
+           
+           {/* Sección Foto + Datos */}
+           <div className="flex items-start gap-6">
+              
+              {/* Foto Circular con Icono de Cámara */}
+              <div 
+                className="relative group cursor-pointer flex-shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                  <div className="w-20 h-20 rounded-full overflow-hidden border border-border-color bg-gray-200">
+                      {currentAvatar ? (
+                          <img src={currentAvatar} alt="Avatar" className="w-full h-full object-cover opacity-100 group-hover:opacity-70 transition-opacity" />
+                      ) : (
+                          <div className="w-full h-full flex items-center justify-center font-bold text-2xl text-gray-500 bg-gray-200">
+                              {displayName?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                      )}
+                  </div>
+                  {/* Icono Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="text-white drop-shadow-md" size={24} />
+                  </div>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
               </div>
-            </div>
-            <input 
-              type="file" 
-              ref={fileInputRef}
-              onChange={handleFileChange} 
-              accept="image/*" 
-              style={{ display: 'none' }} 
-            />
-          </div>
 
-          <div className={styles.field}>
-            <label>Nombre a mostrar</label>
-            <input 
-              type="text"
-              value={displayName} 
-              onChange={(e) => setDisplayName(e.target.value)} 
-              required
-            />
-          </div>
+              {/* Campos de Texto */}
+              <div className="flex-1 flex flex-col gap-4">
+                  <div>
+                      <label className="block text-sm font-semibold mb-1">Nombre</label>
+                      <input 
+                        type="text" 
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="w-full bg-transparent border-b border-border-color py-1 focus:border-foreground outline-none transition-colors"
+                        placeholder="Tu nombre"
+                      />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-semibold mb-1">Biografía</label>
+                      <textarea 
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        className="w-full bg-transparent border-b border-border-color py-1 focus:border-foreground outline-none resize-none transition-colors text-sm"
+                        placeholder="Cuéntanos algo sobre ti..."
+                        rows={2}
+                      />
+                  </div>
+              </div>
+           </div>
 
-          <div className={styles.field}>
-            <label>Biografía</label>
-            <textarea 
-              value={bio} 
-              onChange={(e) => setBio(e.target.value)} 
-              placeholder="Escribe algo sobre ti..."
-              rows={3}
-            />
-          </div>
-
-          <div className={styles.actions}>
-            <button type="button" onClick={onClose} className={styles.cancelBtn}>
-              Cancelar
-            </button>
-            <button type="submit" className={styles.saveBtn}>
-              Guardar cambios
-            </button>
-          </div>
+           {/* Botón Guardar */}
+           <button 
+             type="submit" 
+             disabled={isLoading}
+             className="w-full bg-foreground text-background font-bold py-3 rounded-xl mt-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+           >
+             {isLoading ? 'Guardando...' : 'Listo'}
+           </button>
         </form>
+
       </div>
     </div>
   );
