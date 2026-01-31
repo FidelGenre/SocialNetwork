@@ -13,5 +13,5 @@ export const getAvatarUrl = (url: string | undefined | null) => {
   }
 
   // 3. Si es una ruta relativa del backend, le pegamos el dominio
-  return `https://socialnetworkserver-3kyu.onrender.com${url}`;
+  return `https://socialnetworkserver-0ipr.onrender.com${url}`;
 };
