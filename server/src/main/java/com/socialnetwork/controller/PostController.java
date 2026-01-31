@@ -22,7 +22,7 @@ import java.util.*;
  * Autoriza tanto el entorno de desarrollo local como tu URL de producción en Render.
  */
 @CrossOrigin(
-    origins = {"https://socialnetwork-m3m4.onrender.com", "http://localhost:3000"},
+    origins = {"https://socialnetworkserver-0ipr.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )

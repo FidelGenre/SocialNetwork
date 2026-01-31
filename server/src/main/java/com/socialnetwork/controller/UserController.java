@@ -23,7 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(
-    origins = {"https://socialnetwork-m3m4.onrender.com", "http://localhost:3000"},
+    origins = {"https://socialnetworkserver-0ipr.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )

@@ -13,16 +13,15 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                // Aplicamos la configuración a todas las rutas que empiecen con /api/
-                registry.addMapping("/api/**")
-                        // Autorizamos el frontend en Render y el entorno local de desarrollo
+                // 1. CAMBIO IMPORTANTE: Usamos "/**" para que cubra TODO (incluido /auth y /api)
+                registry.addMapping("/**")
+                        // 2. CAMBIO IMPORTANTE: Aquí va la URL de tu FRONTEND (Client), no la del server
                         .allowedOrigins(
-                            "https://socialnetwork-m3m4.onrender.com"
+                            "https://socialnetworkclient-oyjw.onrender.com", // <--- Esta es la URL de tu web
+                            "http://localhost:3000" // Para cuando pruebas en tu PC
                         )
-                        // Incluimos PATCH (necesario para likes y notificaciones leídas)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
-                        // Importante si en el futuro decides usar Cookies o Sesiones
                         .allowCredentials(true);
             }
         };
