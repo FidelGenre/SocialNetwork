@@ -6,11 +6,14 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { getAvatarUrl } from '@/lib/utils';
 
+// 1. CAMBIO AQUÍ: Agregamos className opcional a la interfaz
 interface PostEditorProps {
   onPostCreated?: () => void;
+  className?: string; 
 }
 
-export const PostEditor = ({ onPostCreated }: PostEditorProps) => {
+// 2. CAMBIO AQUÍ: Recibimos className en los props (con valor por defecto '')
+export const PostEditor = ({ onPostCreated, className = '' }: PostEditorProps) => {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -65,18 +68,18 @@ export const PostEditor = ({ onPostCreated }: PostEditorProps) => {
 
   if (!user) return null;
 
+  // 3. CAMBIO AQUÍ: Inyectamos la variable className en el formulario
   return (
-    <form onSubmit={handleSubmit} className="flex gap-4 w-full">
+    <form onSubmit={handleSubmit} className={`flex gap-4 w-full ${className}`}>
       <div className="flex-shrink-0 pt-1">
         <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-200 dark:border-gray-700">
            <img 
-              src={getAvatarUrl(user.avatarUrl)} 
-              alt={user.username} 
-              className="w-full h-full object-cover"
-              // 👇 AQUÍ ESTÁ EL ARREGLO
-              onError={(e) => {
+             src={getAvatarUrl(user.avatarUrl)} 
+             alt={user.username} 
+             className="w-full h-full object-cover"
+             onError={(e) => {
                  e.currentTarget.src = '/assets/default_profile_400x400.png';
-              }}
+             }}
             />
         </div>
       </div>
