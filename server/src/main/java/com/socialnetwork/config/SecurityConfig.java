@@ -13,16 +13,17 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity // <--- ESTA ETIQUETA ES LA QUE QUITA LA CONTRASEÑA GENERADA
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // OBLIGATORIO: Desactiva bloqueo de formularios
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // OBLIGATORIO: Permite a Next.js conectarse
+            .csrf(csrf -> csrf.disable()) // Desactiva la protección anti-formularios (necesario para React/Next)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Activa tu configuración de dominios
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // Deja pasar Login y Registro sin contraseña
+                .requestMatchers("/auth/**").permitAll() // DEJA PASAR LOGIN/REGISTER
+                .requestMatchers("/").permitAll()        // DEJA PASAR HEALTH CHECK
                 .anyRequest().authenticated()
             );
         return http.build();
@@ -31,8 +32,11 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Aquí autorizamos a tu frontend de Next.js
-        configuration.setAllowedOrigins(Arrays.asList("https://socialnetworkclient-oyjw.onrender.com"));
+        // Permite tu frontend de Render y tu Localhost
+        configuration.setAllowedOrigins(Arrays.asList(
+            "https://socialnetworkclient-oyjw.onrender.com", 
+            "http://localhost:3000"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

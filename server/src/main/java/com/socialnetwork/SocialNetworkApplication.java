@@ -1,11 +1,11 @@
-package com.socialnetwork; // OJO: Verifica que esto coincida con tu carpeta real
+package com.socialnetwork; // Asegúrate que este package sea correcto
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-// 👇 ESTO ES ESTÁNDAR: Le dice explícitamente "Escanea todo bajo com.socialnetwork"
+// ESTO ES CRÍTICO: Obliga a Spring a buscar en todas las carpetas que empiecen por com.socialnetwork
 @ComponentScan(basePackages = "com.socialnetwork") 
 public class SocialNetworkApplication {
 
