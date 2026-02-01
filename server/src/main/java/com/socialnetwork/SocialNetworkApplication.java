@@ -1,12 +1,12 @@
-package com.socialnetwork; // OJO: Verifica que esto coincida con lo que tienes
+package com.socialnetwork; // OJO: Verifica que esto coincida con tu carpeta real
 
-import com.socialnetwork.config.SecurityConfig; // <--- IMPORTA TU CLASE CONFIG
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import; // <--- NECESARIO
+import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@Import(SecurityConfig.class) // <--- ESTA ES LA CLAVE. FORZAMOS LA CARGA.
+// 👇 ESTO ES ESTÁNDAR: Le dice explícitamente "Escanea todo bajo com.socialnetwork"
+@ComponentScan(basePackages = "com.socialnetwork") 
 public class SocialNetworkApplication {
 
     public static void main(String[] args) {
