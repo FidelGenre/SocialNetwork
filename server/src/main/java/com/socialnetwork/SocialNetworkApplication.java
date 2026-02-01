@@ -1,12 +1,14 @@
-package com.socialnetwork; // Asegúrate de que no diga "example"
+package com.socialnetwork; 
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+// 👇 ESTA LÍNEA ES LA SOLUCIÓN DEFINITIVA 👇
+// Obliga a Spring a buscar tu SecurityConfig en todo el paquete "com.socialnetwork"
+@SpringBootApplication(scanBasePackages = "com.socialnetwork") 
 public class SocialNetworkApplication {
+
     public static void main(String[] args) {
-        // ERROR AQUÍ: Debe ser SocialNetworkApplication (con N mayúscula)
         SpringApplication.run(SocialNetworkApplication.class, args);
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,25 +19,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Desactivar CSRF (necesario para APIs REST/JSON)
-            .csrf(csrf -> csrf.disable())
-            // 2. Configurar CORS explícitamente
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // 3. Definir rutas públicas y privadas
+            .csrf(csrf -> csrf.disable()) // OBLIGATORIO: Desactiva bloqueo de formularios
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // OBLIGATORIO: Permite a Next.js conectarse
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // DEJA PASAR LOGIN Y REGISTER
-                .requestMatchers("/api/public/**").permitAll() // Otros endpoints públicos si tienes
-                .anyRequest().authenticated() // Todo lo demás requiere token
+                .requestMatchers("/auth/**").permitAll() // Deja pasar Login y Registro sin contraseña
+                .anyRequest().authenticated()
             );
-        
         return http.build();
     }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // OJO: Aquí pongo la URL exacta de tu frontend que vi en la captura
-        configuration.setAllowedOrigins(Arrays.asList("https://socialnetworkclient-oyjw.onrender.com", "http://localhost:3000"));
+        // Aquí autorizamos a tu frontend de Next.js
+        configuration.setAllowedOrigins(Arrays.asList("https://socialnetworkclient-oyjw.onrender.com"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
