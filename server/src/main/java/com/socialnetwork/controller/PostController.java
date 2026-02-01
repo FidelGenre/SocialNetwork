@@ -16,13 +16,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/posts")
-/**
- * CONFIGURACIÓN DE CORS:
- * Autoriza tanto el entorno de desarrollo local como tu URL de producción en Render.
- */
+// 👇 AQUÍ ESTÁ LA MAGIA: Escuchamos en LAS DOS direcciones para que todo funcione
+@RequestMapping({"/posts", "/api/posts"})
 @CrossOrigin(
-    origins = {"https://socialnetworkserver-0ipr.onrender.com", "http://localhost:3000"},
+    origins = {"https://socialnetworkclient-oyjw.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )
@@ -69,6 +66,8 @@ public class PostController {
                 if (!Files.exists(root)) Files.createDirectories(root);
                 String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
                 Files.copy(file.getInputStream(), this.root.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+                
+                // Mantenemos la ruta original para las imágenes nuevas
                 post.setImageUrl("/api/posts/images/" + fileName);
             } catch (IOException e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al guardar la imagen");
@@ -91,35 +90,26 @@ public class PostController {
     @Transactional
     public ResponseEntity<?> deletePost(@PathVariable("id") Long id) {
         return postRepository.findById(id).map(post -> {
-            // A. Limpiar notificaciones
             activityRepository.deleteByPost(post);
-            
-            // B. Limpiar relación de likes
             post.getLikedByUsers().clear();
             
-            // C. Limpiar mensajes
             List<Message> sharedInMessages = messageRepository.findBySharedPost(post);
             sharedInMessages.forEach(msg -> msg.setSharedPost(null));
             messageRepository.saveAll(sharedInMessages);
 
-            // D. BORRAR REPOSTS
             List<Post> reposts = postRepository.findByOriginalPostId(id);
             postRepository.deleteAll(reposts);
 
-            // E. BORRAR RESPUESTAS
             List<Post> replies = postRepository.findByParentPost(post);
             postRepository.deleteAll(replies);
 
-            // F. Actualizar contador del padre si es respuesta
             if (post.getParentPost() != null) {
                 Post parent = post.getParentPost();
                 parent.setRepliesCount(Math.max(0, parent.getRepliesCount() - 1));
                 postRepository.save(parent);
             }
 
-            // G. Borrado final
             postRepository.delete(post);
-            
             return ResponseEntity.ok().body(Map.of("message", "Post eliminado"));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -246,27 +236,17 @@ public class PostController {
         return ResponseEntity.ok(postRepository.findByParentPostIdOrderByCreatedAtDesc(id));
     }
 
-    // -----------------------------------------------------------
-    // 9. NUEVO: OBTENER POSTS DE USUARIOS SEGUIDOS ("Para Ti" / "Siguiendo")
-    // -----------------------------------------------------------
     @GetMapping("/following/{username}")
     public ResponseEntity<List<Post>> getFollowingPosts(@PathVariable("username") String username) {
         Optional<User> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
 
         User currentUser = userOpt.get();
         List<User> following = currentUser.getFollowing(); 
 
-        if (following == null || following.isEmpty()) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+        if (following == null || following.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
 
-        // CORREGIDO: Usamos el método que filtra respuestas (ParentPostIsNull)
-        // para que el feed "Siguiendo" se vea limpio como el feed principal.
         List<Post> posts = postRepository.findByUserInAndParentPostIsNullOrderByCreatedAtDesc(following);
-        
         return ResponseEntity.ok(posts);
     }
 
