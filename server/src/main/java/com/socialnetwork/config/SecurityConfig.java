@@ -36,15 +36,18 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/").permitAll()
                 
-                // 👇 AQUÍ ESTÁ EL ARREGLO: Permitimos ambas variantes
-                .requestMatchers("/posts/**").permitAll()      // Por si acaso
-                .requestMatchers("/api/posts/**").permitAll()  // <--- ESTA ES LA QUE FALTABA
+                // POSTS (Feed) - Esto ya lo tenías bien
+                .requestMatchers("/posts/**", "/api/posts/**").permitAll()
+                
+                // 👇 ESTO ES LO QUE TE FALTABA PARA EL PERFIL 👇
+                .requestMatchers("/users/**", "/api/users/**").permitAll()
                 
                 .anyRequest().authenticated()
             );
         return http.build();
     }
 
+    // ... (El resto de tus Beans está perfecto, no hace falta tocarlos)
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -70,7 +73,7 @@ public class SecurityConfig {
             "https://socialnetworkclient-oyjw.onrender.com", 
             "http://localhost:3000"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         

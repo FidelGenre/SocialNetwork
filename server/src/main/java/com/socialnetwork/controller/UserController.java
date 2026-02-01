@@ -21,7 +21,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
+// 👇 CORRECCIÓN: Escuchamos en AMBAS rutas para evitar errores 404
+@RequestMapping({"/users", "/api/users"})
 @CrossOrigin(
     origins = {"https://socialnetworkserver-0ipr.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS},
@@ -132,6 +133,7 @@ public class UserController {
                 String fileName = "avatar_" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
                 Files.copy(file.getInputStream(), this.root.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
 
+                // Mantenemos la ruta compatible con el sistema de imágenes
                 user.setAvatarUrl("/api/posts/images/" + fileName);
                 userRepository.save(user);
 
