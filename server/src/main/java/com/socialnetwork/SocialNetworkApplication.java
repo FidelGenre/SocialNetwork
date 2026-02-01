@@ -1,4 +1,4 @@
-package com.socialnetwork; // <--- Asegúrate de que esto coincida con tu carpeta actual
+package com.socialnetwork; // <--- ASEGÚRATE DE QUE ESTE NOMBRE COINCIDA CON TU CARPETA
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,27 +14,24 @@ import java.util.Arrays;
 import java.util.List;
 
 @SpringBootApplication
-@EnableWebSecurity // <--- ESTO ES CRÍTICO
+@EnableWebSecurity // <--- ESTO DESACTIVA EL PASSWORD GENERADO
 public class SocialNetworkApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SocialNetworkApplication.class, args);
     }
 
-    // --- CONFIGURACIÓN DE SEGURIDAD INTEGRADA (A prueba de fallos) ---
+    // --- SEGURIDAD INCRUSTADA ---
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Desactivar CSRF para que el POST de login funcione
-            .csrf(csrf -> csrf.disable())
-            // 2. Habilitar CORS para que tu Next.js pueda hablar con Java
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // 3. Reglas de acceso
+            .csrf(csrf -> csrf.disable()) // Permite POST de Login
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Permite conexión de Next.js
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // Login y Registro: PÚBLICOS
-                .requestMatchers("/").permitAll()        // Health Check: PÚBLICO
-                .anyRequest().authenticated()            // Todo lo demás: PRIVADO
+                .requestMatchers("/auth/**").permitAll() // Login PÚBLICO
+                .requestMatchers("/").permitAll()        // Health Check PÚBLICO
+                .anyRequest().authenticated()
             );
         return http.build();
     }
@@ -42,7 +39,7 @@ public class SocialNetworkApplication {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permitir explícitamente tu frontend en Render
+        // URLs permitidas
         configuration.setAllowedOrigins(Arrays.asList(
             "https://socialnetworkclient-oyjw.onrender.com", 
             "http://localhost:3000"
