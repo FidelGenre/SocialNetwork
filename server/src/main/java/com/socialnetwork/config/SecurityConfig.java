@@ -1,15 +1,16 @@
 package com.socialnetwork.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -22,11 +23,9 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    public SecurityConfig() {
-        System.out.println(">>> 🕵️ CARGANDO SECURITYCONFIG DESDE EL PAQUETE CONFIG <<<");
-    }
+    @Autowired
+    private UserDetailsService userDetailsService; // Inyectamos el servicio del Paso 1
 
-    // 1. LAS REGLAS DE ACCESO (LAS PUERTAS)
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -34,33 +33,33 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/api/posts/images/**").permitAll() // DEJAR VER IMÁGENES PÚBLICAS
                 .requestMatchers("/").permitAll()
                 .anyRequest().authenticated()
             );
         return http.build();
     }
 
-    // 2. EL GUARDIA (USER DETAILS) - ¡ESTO MATA LA CONTRASEÑA GENERADA!
+    // Conecta el servicio de base de datos al sistema de login
     @Bean
-    public UserDetailsService userDetailsService() {
-        // Definimos un usuario en memoria para probar. 
-        // Cuando conectes tu base de datos real, cambiarás esto por tu propio servicio.
-        UserDetails admin = User.builder()
-            .username("admin")
-            .password("{noop}admin123") // {noop} significa sin encriptar (solo para pruebas)
-            .roles("ADMIN")
-            .build();
-        
-        return new InMemoryUserDetailsManager(admin);
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
-    // 3. EL JEFE DE SEGURIDAD (Necesario para hacer login en tu Controller)
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
 
-    // 4. CONFIGURACIÓN DE CORS (FRONTEND)
+    // IMPORTANTE: Como tus contraseñas en BD no están encriptadas (según veo), usamos NoOp
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return NoOpPasswordEncoder.getInstance(); 
+    }
+
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -68,10 +67,9 @@ public class SecurityConfig {
             "https://socialnetworkclient-oyjw.onrender.com", 
             "http://localhost:3000"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
