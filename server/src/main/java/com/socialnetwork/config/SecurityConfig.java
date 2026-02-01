@@ -24,7 +24,7 @@ import java.util.List;
 public class SecurityConfig {
 
     @Autowired
-    private UserDetailsService userDetailsService; // Inyectamos el servicio del Paso 1
+    private UserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -32,15 +32,20 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+                // Rutas públicas (Login, Registro, Imágenes)
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/posts/images/**").permitAll() // DEJAR VER IMÁGENES PÚBLICAS
+                .requestMatchers("/api/posts/images/**").permitAll()
                 .requestMatchers("/").permitAll()
+                
+                // 👇 ESTO ES LO NUEVO: Abrimos los posts a todo el mundo para probar
+                .requestMatchers("/posts/**").permitAll() 
+                
+                // El resto requiere login
                 .anyRequest().authenticated()
             );
         return http.build();
     }
 
-    // Conecta el servicio de base de datos al sistema de login
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -54,9 +59,9 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-    // IMPORTANTE: Como tus contraseñas en BD no están encriptadas (según veo), usamos NoOp
     @Bean
     public PasswordEncoder passwordEncoder() {
+        // Usamos NoOp porque tus contraseñas en la BD no están encriptadas
         return NoOpPasswordEncoder.getInstance(); 
     }
 
@@ -70,6 +75,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
