@@ -32,15 +32,14 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas (Login, Registro, Imágenes)
+                // Rutas públicas de sistema
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/posts/images/**").permitAll()
                 .requestMatchers("/").permitAll()
                 
-                // 👇 ESTO ES LO NUEVO: Abrimos los posts a todo el mundo para probar
-                .requestMatchers("/posts/**").permitAll() 
+                // 👇 AQUÍ ESTÁ EL ARREGLO: Permitimos ambas variantes
+                .requestMatchers("/posts/**").permitAll()      // Por si acaso
+                .requestMatchers("/api/posts/**").permitAll()  // <--- ESTA ES LA QUE FALTABA
                 
-                // El resto requiere login
                 .anyRequest().authenticated()
             );
         return http.build();
@@ -61,7 +60,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Usamos NoOp porque tus contraseñas en la BD no están encriptadas
         return NoOpPasswordEncoder.getInstance(); 
     }
 
