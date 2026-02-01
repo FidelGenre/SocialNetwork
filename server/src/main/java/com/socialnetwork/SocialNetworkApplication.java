@@ -1,11 +1,12 @@
-package com.socialnetwork; 
+package com.socialnetwork; // OJO: Verifica que esto coincida con lo que tienes
 
+import com.socialnetwork.config.SecurityConfig; // <--- IMPORTA TU CLASE CONFIG
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import; // <--- NECESARIO
 
-// 👇 ESTA LÍNEA ES LA SOLUCIÓN DEFINITIVA 👇
-// Obliga a Spring a buscar tu SecurityConfig en todo el paquete "com.socialnetwork"
-@SpringBootApplication(scanBasePackages = "com.socialnetwork") 
+@SpringBootApplication
+@Import(SecurityConfig.class) // <--- ESTA ES LA CLAVE. FORZAMOS LA CARGA.
 public class SocialNetworkApplication {
 
     public static void main(String[] args) {
