@@ -11,14 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/activities")
-/**
- * CONFIGURACIÓN DE CORS:
- * Autoriza el frontend de Render y el local de Vite.
- * Incluye PATCH para marcar notificaciones como leídas.
- */
+// 👇 AQUÍ ESTÁ EL ARREGLO: Escuchamos en las dos direcciones
+@RequestMapping({"/activities", "/api/activities"})
 @CrossOrigin(
-    origins = {"https://socialnetworkserver-0ipr.onrender.com", "http://localhost:3000"},
+    origins = {"https://socialnetworkclient-oyjw.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.PATCH, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )

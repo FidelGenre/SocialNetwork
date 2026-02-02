@@ -3,6 +3,7 @@ package com.socialnetwork.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -32,22 +33,30 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas de sistema
-                .requestMatchers("/auth/**").permitAll()
+                // 1. AUTH (LOGIN/REGISTER) - ABRIR AMBAS PUERTAS
+                .requestMatchers("/auth/**", "/api/auth/**").permitAll() // 👈 AQUÍ ESTABA EL PROBLEMA DEL 403
+
                 .requestMatchers("/").permitAll()
-                
-                // POSTS (Feed) - Esto ya lo tenías bien
-                .requestMatchers("/posts/**", "/api/posts/**").permitAll()
-                
-                // 👇 ESTO ES LO QUE TE FALTABA PARA EL PERFIL 👇
+
+                // 2. POSTS
+                .requestMatchers(HttpMethod.GET, "/posts/**", "/api/posts/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/posts/**", "/api/posts/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/posts/**", "/api/posts/**").authenticated()
+                .requestMatchers(HttpMethod.PATCH, "/posts/**", "/api/posts/**").authenticated()
+
+                // 3. USUARIOS
                 .requestMatchers("/users/**", "/api/users/**").permitAll()
+
+                // 4. MENSAJES Y NOTIFICACIONES
+                .requestMatchers("/messages/**", "/api/messages/**").permitAll()
+                .requestMatchers("/activities/**", "/api/activities/**").permitAll()
                 
                 .anyRequest().authenticated()
             );
         return http.build();
     }
 
-    // ... (El resto de tus Beans está perfecto, no hace falta tocarlos)
+    // ... (El resto del archivo igual: authenticationProvider, authenticationManager, passwordEncoder, cors)
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();

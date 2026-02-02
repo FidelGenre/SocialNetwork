@@ -13,17 +13,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/auth")
+// 👇 SOLUCIÓN: Escuchamos en las dos rutas para que el Frontend encuentre la puerta
+@RequestMapping({"/auth", "/api/auth"})
 @CrossOrigin(
     origins = {"https://socialnetworkclient-oyjw.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.POST, RequestMethod.OPTIONS},
     allowedHeaders = "*",
-    allowCredentials = "true" // Importante para la sesión
+    allowCredentials = "true"
 )
 public class AuthController {
 
     @Autowired
-    private AuthenticationManager authenticationManager; // El jefe de seguridad
+    private AuthenticationManager authenticationManager;
 
     @Autowired
     private UserRepository userRepository;

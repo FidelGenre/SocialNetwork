@@ -1,6 +1,5 @@
 // src/lib/utils.ts
 
-// Esta función decide qué imagen mostrar
 export const getAvatarUrl = (url: string | undefined | null) => {
   // 1. Si no hay URL, retornamos la imagen gris por defecto
   if (!url || url.trim() === '') {
@@ -12,6 +11,6 @@ export const getAvatarUrl = (url: string | undefined | null) => {
     return url;
   }
 
-  // 3. Si es una ruta relativa del backend, le pegamos el dominio
-  return `https://socialnetworkserver-0ipr.onrender.com${url}`;
+  // 3. CAMBIO: Apuntamos a LOCALHOST para ver las fotos de tu PC
+  return `http://localhost:8080${url}`;
 };

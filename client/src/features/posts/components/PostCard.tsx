@@ -110,16 +110,12 @@ export const PostCard: React.FC<PostCardProps> = ({
                 src={getAvatarUrl(user?.avatarUrl)} 
                 alt={user?.username || 'User'} 
                 className="w-full h-full object-cover"
-                // 👇 ESTA ES LA SOLUCIÓN: Si falla, carga la default
                 onError={(e) => {
                     e.currentTarget.src = '/assets/default_profile_400x400.png';
                 }}
               />
           </div>
-          
-          {!isLast && (
-              <div className="w-[2px] flex-1 bg-gray-200 dark:bg-gray-800 my-2 rounded-full"></div>
-          )}
+          {/* AQUÍ ELIMINÉ LA LÍNEA VERTICAL */}
       </div>
 
       <div className="flex-1 min-w-0 pb-4 border-b border-border-color/60">

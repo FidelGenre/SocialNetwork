@@ -10,14 +10,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/messages")
-/**
- * CONFIGURACIÓN DE CORS:
- * Autoriza el origen de producción en Render y el local de Vite.
- * Se incluye PATCH para la funcionalidad de "marcar como leído".
- */
+// 👇 AQUÍ ESTÁ EL ARREGLO: Escuchamos en las dos direcciones
+@RequestMapping({"/messages", "/api/messages"})
 @CrossOrigin(
-    origins = {"https://socialnetworkserver-0ipr.onrender.com", "http://localhost:3000"},
+    origins = {"https://socialnetworkclient-oyjw.onrender.com", "http://localhost:3000"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PATCH, RequestMethod.OPTIONS},
     allowedHeaders = "*"
 )
