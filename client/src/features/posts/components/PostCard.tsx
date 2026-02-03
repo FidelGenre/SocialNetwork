@@ -49,6 +49,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [likes, setLikes] = useState(initialLikes);
   const [isLiked, setIsLiked] = useState(false);
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const getFullUrl = (url: string | undefined) => {
     if (!url) return undefined;
@@ -80,14 +81,30 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
+  // 👇 VERSIÓN DEFINITIVA DE HANDLEDELETE (Compatible con el nuevo Backend)
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm("¿Borrar post?")) return;
+    setShowMenu(false);
+
+    if (!currentUser?.username) return;
+
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este post?")) return;
+    
     try {
-        await api.delete(`/posts/${id}?username=${currentUser?.username}`);
+        console.log(`Borrando post ${id} como usuario: ${currentUser.username}`);
+        
+        // Enviamos el username TANTO en URL como en el Body para asegurar compatibilidad
+        await api.delete(`/posts/${id}`, {
+            params: { username: currentUser.username }, // ?username=fidelgenre
+            data: { username: currentUser.username }    // Body: { username: "fidelgenre" }
+        });
+        
         router.refresh();
         if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('postCreatedGlobal'));
-    } catch(e) { console.error(e); }
+    } catch(e: any) { 
+        console.error("Error al borrar:", e.response?.data || e.message);
+        alert("Error al borrar: " + (e.response?.data || "No eres el dueño o el servidor falló."));
+    }
   }
 
   const goToPost = () => router.push(`/post/${id}`);
@@ -115,7 +132,6 @@ export const PostCard: React.FC<PostCardProps> = ({
                 }}
               />
           </div>
-          {/* AQUÍ ELIMINÉ LA LÍNEA VERTICAL */}
       </div>
 
       <div className="flex-1 min-w-0 pb-4 border-b border-border-color/60">
@@ -136,15 +152,43 @@ export const PostCard: React.FC<PostCardProps> = ({
                   </span>
               </div>
               
-              <div className="flex items-center gap-1 -mr-2">
-                  {currentUser?.username === user?.username && (
-                      <button onClick={handleDelete} className="p-2 text-gray-400 hover:text-red-500 rounded-full transition-colors">
-                          <Trash2 size={18} />
-                      </button>
-                  )}
-                  <button className="p-2 text-gray-400 hover:text-foreground rounded-full transition-colors">
+              <div className="relative -mr-2">
+                  <button 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(!showMenu);
+                    }}
+                    className="p-2 text-gray-400 hover:text-foreground hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
+                  >
                       <MoreHorizontal size={20} />
                   </button>
+
+                  {showMenu && (
+                    <>
+                        <div 
+                            className="fixed inset-0 z-10 cursor-default" 
+                            onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} 
+                        />
+                        <div className="absolute right-0 top-8 z-20 w-40 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-border-color overflow-hidden py-1">
+                            {currentUser?.username === user?.username ? (
+                                <button
+                                    onClick={handleDelete}
+                                    className="w-full text-left px-4 py-3 text-[14px] text-red-500 font-medium hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 transition-colors"
+                                >
+                                    <Trash2 size={16} />
+                                    Eliminar post
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setShowMenu(false); alert("Reportado"); }}
+                                    className="w-full text-left px-4 py-3 text-[14px] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+                                >
+                                    Reportar
+                                </button>
+                            )}
+                        </div>
+                    </>
+                  )}
               </div>
           </div>
 

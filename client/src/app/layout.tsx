@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+// 👇 1. Importa el Guardia
+import AuthGuard from "@/context/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Social Network",
@@ -14,37 +16,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body className="antialiased bg-background text-foreground">
-        
-        {/* 👇 AGREGA ESTO JUSTO AL PRINCIPIO DEL BODY */}
+    <html lang="es" className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
+      <body className="antialiased bg-background text-foreground transition-none">
+        {/* Script para evitar flash blanco (el que pusimos antes) */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              (function() {
-                try {
-                  // 1. Buscamos si el usuario ya eligió un tema
-                  var savedTheme = localStorage.getItem('theme');
-                  
-                  // 2. Si es 'light', ponemos modo claro. Si es 'dark' O no hay nada, ponemos OSCURO.
-                  if (savedTheme === 'light') {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.setAttribute('data-theme', 'light');
-                  } else {
-                    // Por defecto forzamos oscuro aquí
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                  }
-                } catch (e) {}
-              })()
+              try {
+                if (localStorage.getItem('theme') === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.style.colorScheme = 'light';
+                  document.documentElement.setAttribute('data-theme', 'light');
+                } else {
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                }
+              } catch (e) {}
             `,
           }}
         />
-        {/* 👆 FIN DEL SCRIPT */}
 
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            {/* 👇 2. AQUÍ ESTÁ LA CLAVE: Envuelve {children} con AuthGuard */}
+            <AuthGuard>
+              {children}
+            </AuthGuard>
           </AuthProvider>
         </ThemeProvider>
       </body>

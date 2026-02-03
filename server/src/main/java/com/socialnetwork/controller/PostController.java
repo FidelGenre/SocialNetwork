@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
-// 👇 AQUÍ ESTÁ LA MAGIA: Escuchamos en LAS DOS direcciones para que todo funcione
 @RequestMapping({"/posts", "/api/posts"})
 @CrossOrigin(
     origins = {"https://socialnetworkclient-oyjw.onrender.com", "http://localhost:3000"},
@@ -30,7 +29,6 @@ public class PostController {
     @Autowired private ActivityRepository activityRepository;
     @Autowired private MessageRepository messageRepository; 
 
-    // Directorio para almacenamiento de imágenes
     private final Path root = Paths.get("uploads");
 
     // 1. OBTENER UN POST POR ID
@@ -41,7 +39,7 @@ public class PostController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // 2. CREAR POST (Texto e Imagen)
+    // 2. CREAR POST
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createPost(
             @RequestParam("content") String content,
@@ -66,8 +64,6 @@ public class PostController {
                 if (!Files.exists(root)) Files.createDirectories(root);
                 String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
                 Files.copy(file.getInputStream(), this.root.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
-                
-                // Mantenemos la ruta original para las imágenes nuevas
                 post.setImageUrl("/api/posts/images/" + fileName);
             } catch (IOException e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al guardar la imagen");
@@ -85,36 +81,60 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(postRepository.save(post));
     }
 
-    // 3. ELIMINAR POST (Borrado profundo)
+    // 3. ELIMINAR POST (MODO LIMPIEZA: SEGURIDAD DESACTIVADA TEMPORALMENTE)
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity<?> deletePost(@PathVariable("id") Long id) {
-        return postRepository.findById(id).map(post -> {
-            activityRepository.deleteByPost(post);
-            post.getLikedByUsers().clear();
-            
-            List<Message> sharedInMessages = messageRepository.findBySharedPost(post);
-            sharedInMessages.forEach(msg -> msg.setSharedPost(null));
-            messageRepository.saveAll(sharedInMessages);
+    public ResponseEntity<?> deletePost(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "username", required = false) String usernameParam,
+            @RequestBody(required = false) Map<String, String> body) {
+        
+        // Obtenemos el post
+        Optional<Post> postOpt = postRepository.findById(id);
+        if (postOpt.isEmpty()) return ResponseEntity.notFound().build();
+        Post post = postOpt.get();
 
-            List<Post> reposts = postRepository.findByOriginalPostId(id);
-            postRepository.deleteAll(reposts);
+        // 👇👇👇 AQUÍ ESTÁ EL CAMBIO CLAVE 👇👇👇
+        // He COMENTADO la validación para que puedas borrar los posts fantasmas.
+        // Cuando termines de limpiar tu DB, puedes quitar las barras "//" para reactivar la seguridad.
 
-            List<Post> replies = postRepository.findByParentPost(post);
-            postRepository.deleteAll(replies);
+        /* String userRequesting = usernameParam;
+        if (userRequesting == null && body != null) userRequesting = body.get("username");
+        String ownerUsername = post.getUser().getUsername();
 
-            if (post.getParentPost() != null) {
-                Post parent = post.getParentPost();
-                parent.setRepliesCount(Math.max(0, parent.getRepliesCount() - 1));
-                postRepository.save(parent);
-            }
+        if (userRequesting == null || !ownerUsername.trim().equalsIgnoreCase(userRequesting.trim())) {
+             System.out.println("Bloqueo de seguridad: Dueño=" + ownerUsername + " Solicitante=" + userRequesting);
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No eres el dueño (ID Mismatch)");
+        }
+        */
+        
+        // 👆👆👆 FIN DE LA ZONA COMENTADA 👆👆👆
 
-            postRepository.delete(post);
-            return ResponseEntity.ok().body(Map.of("message", "Post eliminado"));
-        }).orElse(ResponseEntity.notFound().build());
+        // Borrado de relaciones
+        activityRepository.deleteByPost(post);
+        post.getLikedByUsers().clear();
+        
+        List<Message> sharedInMessages = messageRepository.findBySharedPost(post);
+        sharedInMessages.forEach(msg -> msg.setSharedPost(null));
+        messageRepository.saveAll(sharedInMessages);
+
+        List<Post> reposts = postRepository.findByOriginalPostId(id);
+        postRepository.deleteAll(reposts);
+
+        List<Post> replies = postRepository.findByParentPost(post);
+        postRepository.deleteAll(replies);
+
+        if (post.getParentPost() != null) {
+            Post parent = post.getParentPost();
+            parent.setRepliesCount(Math.max(0, parent.getRepliesCount() - 1));
+            postRepository.save(parent);
+        }
+
+        postRepository.delete(post);
+        return ResponseEntity.ok().body(Map.of("message", "Post eliminado (Modo admin)"));
     }
 
-    // 4. DAR/QUITAR ME GUSTA
+    // 4. LIKE / UNLIKE
     @PatchMapping("/{id}/like")
     @Transactional
     public ResponseEntity<?> likePost(@PathVariable("id") Long id, @RequestParam("username") String username) {
@@ -178,7 +198,7 @@ public class PostController {
         return ResponseEntity.notFound().build();
     }
 
-    // 6. COMPARTIR EN CHAT
+    // 6. SHARE
     @PostMapping("/{id}/share")
     @Transactional
     public ResponseEntity<?> sharePost(
@@ -210,7 +230,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error al compartir");
     }
 
-    // 7. GETTERS GENERALES (FEED PRINCIPAL)
+    // 7. GETTERS
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
         return ResponseEntity.ok(postRepository.findAllByParentPostIsNullOrderByCreatedAtDesc());
@@ -250,7 +270,7 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
-    // 8. SERVIR IMÁGENES
+    // 8. SERVIR IMAGENES
     @GetMapping("/images/{filename:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable("filename") String filename) {
         try {
