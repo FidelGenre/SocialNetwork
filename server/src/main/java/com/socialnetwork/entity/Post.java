@@ -19,7 +19,6 @@ public class Post {
 
     private String imageUrl; 
 
-    // 1. CAMBIO A 'Integer' para permitir validación != null en el controlador
     private Integer likesCount = 0;
     private Integer repliesCount = 0;
     private Integer repostsCount = 0;
@@ -27,8 +26,6 @@ public class Post {
     private String repostFromUserName; 
     private Long originalPostId; 
 
-    // 2. FORMATO ISO PARA FECHAS: Esto soluciona que siempre diga "ahora"
-    // Al forzar UTC, React podrá calcular correctamente la diferencia de tiempo.
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private LocalDateTime createdAt;
 
@@ -42,6 +39,7 @@ public class Post {
     @JsonIgnoreProperties({"parentPost", "user"})
     private Post parentPost; 
 
+    // RELACIÓN DE LIKES
     @ManyToMany
     @JoinTable(
         name = "post_likes",
@@ -51,7 +49,17 @@ public class Post {
     @JsonIgnoreProperties({"posts", "followers", "following", "password"})
     private Set<User> likedByUsers = new HashSet<>();
 
-    // --- GETTERS Y SETTERS ACTUALIZADOS ---
+    // 👇👇👇 NUEVA RELACIÓN PARA REPOSTS (Para que el botón se ponga verde) 👇👇👇
+    @ManyToMany
+    @JoinTable(
+        name = "post_reposts",
+        joinColumns = @JoinColumn(name = "post_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @JsonIgnoreProperties({"posts", "followers", "following", "password", "roles", "bio", "enabled"})
+    private Set<User> repostedByUsers = new HashSet<>();
+
+    // --- GETTERS Y SETTERS ---
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -62,7 +70,6 @@ public class Post {
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    // Getters con protección contra Nulll para evitar errores en el Frontend
     public Integer getLikesCount() { return (likesCount == null) ? 0 : likesCount; }
     public void setLikesCount(Integer likesCount) { this.likesCount = likesCount; }
 
@@ -89,4 +96,8 @@ public class Post {
 
     public Set<User> getLikedByUsers() { return likedByUsers; }
     public void setLikedByUsers(Set<User> users) { this.likedByUsers = users; }
+
+    // 👇 Getter y Setter para la nueva lista de reposts
+    public Set<User> getRepostedByUsers() { return repostedByUsers; }
+    public void setRepostedByUsers(Set<User> repostedByUsers) { this.repostedByUsers = repostedByUsers; }
 }

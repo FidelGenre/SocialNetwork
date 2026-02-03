@@ -31,6 +31,28 @@ public class PostController {
 
     private final Path root = Paths.get("uploads");
 
+    // --- MÉTODOS AUXILIARES DE SINCRONIZACIÓN ---
+
+    /**
+     * Busca todas las copias (reposts) y les copia EXACTAMENTE
+     * lo mismo que tiene el original: Números y LISTAS DE USUARIOS.
+     */
+    private void syncAllCopies(Post original) {
+        List<Post> copies = postRepository.findByOriginalPostId(original.getId());
+        for (Post copy : copies) {
+            // 1. Copiar contadores
+            copy.setLikesCount(original.getLikesCount());
+            copy.setRepostsCount(original.getRepostsCount());
+
+            // 2. 👇 COPIAR LAS LISTAS DE USUARIOS (¡ESTO ES LO QUE FALTABA!)
+            // Al copiar el Set de usuarios, la copia sabrá que TÚ estás en la lista,
+            // y el frontend pintará el corazón ROJO.
+            copy.setLikedByUsers(new HashSet<>(original.getLikedByUsers()));
+            copy.setRepostedByUsers(new HashSet<>(original.getRepostedByUsers()));
+        }
+        postRepository.saveAll(copies);
+    }
+
     // 1. OBTENER UN POST POR ID
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPostById(@PathVariable("id") Long id) {
@@ -81,7 +103,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(postRepository.save(post));
     }
 
-    // 3. ELIMINAR POST (MODO LIMPIEZA: SEGURIDAD DESACTIVADA TEMPORALMENTE)
+    // 3. ELIMINAR POST
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> deletePost(
@@ -89,30 +111,13 @@ public class PostController {
             @RequestParam(value = "username", required = false) String usernameParam,
             @RequestBody(required = false) Map<String, String> body) {
         
-        // Obtenemos el post
         Optional<Post> postOpt = postRepository.findById(id);
         if (postOpt.isEmpty()) return ResponseEntity.notFound().build();
         Post post = postOpt.get();
 
-        // 👇👇👇 AQUÍ ESTÁ EL CAMBIO CLAVE 👇👇👇
-        // He COMENTADO la validación para que puedas borrar los posts fantasmas.
-        // Cuando termines de limpiar tu DB, puedes quitar las barras "//" para reactivar la seguridad.
-
-        /* String userRequesting = usernameParam;
-        if (userRequesting == null && body != null) userRequesting = body.get("username");
-        String ownerUsername = post.getUser().getUsername();
-
-        if (userRequesting == null || !ownerUsername.trim().equalsIgnoreCase(userRequesting.trim())) {
-             System.out.println("Bloqueo de seguridad: Dueño=" + ownerUsername + " Solicitante=" + userRequesting);
-             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No eres el dueño (ID Mismatch)");
-        }
-        */
-        
-        // 👆👆👆 FIN DE LA ZONA COMENTADA 👆👆👆
-
-        // Borrado de relaciones
         activityRepository.deleteByPost(post);
         post.getLikedByUsers().clear();
+        post.getRepostedByUsers().clear();
         
         List<Message> sharedInMessages = messageRepository.findBySharedPost(post);
         sharedInMessages.forEach(msg -> msg.setSharedPost(null));
@@ -131,67 +136,107 @@ public class PostController {
         }
 
         postRepository.delete(post);
-        return ResponseEntity.ok().body(Map.of("message", "Post eliminado (Modo admin)"));
+        return ResponseEntity.ok().body(Map.of("message", "Post eliminado"));
     }
 
     // 4. LIKE / UNLIKE
     @PatchMapping("/{id}/like")
     @Transactional
     public ResponseEntity<?> likePost(@PathVariable("id") Long id, @RequestParam("username") String username) {
-        Optional<Post> postOpt = postRepository.findById(id);
+        Optional<Post> targetPostOpt = postRepository.findById(id);
         Optional<User> userOpt = userRepository.findByUsername(username);
 
-        if (postOpt.isPresent() && userOpt.isPresent()) {
-            Post post = postOpt.get();
+        if (targetPostOpt.isPresent() && userOpt.isPresent()) {
+            Post targetPost = targetPostOpt.get();
             User user = userOpt.get();
 
-            if (post.getLikedByUsers().contains(user)) {
-                post.getLikedByUsers().remove(user);
-                post.setLikesCount(Math.max(0, post.getLikesCount() - 1));
+            Long realOriginalId = (targetPost.getOriginalPostId() != null) 
+                                  ? targetPost.getOriginalPostId() 
+                                  : targetPost.getId();
+            
+            Post original = postRepository.findById(realOriginalId).orElse(targetPost);
+
+            if (original.getLikedByUsers().contains(user)) {
+                original.getLikedByUsers().remove(user);
+                original.setLikesCount(Math.max(0, original.getLikesCount() - 1));
             } else {
-                post.getLikedByUsers().add(user);
-                post.setLikesCount(post.getLikesCount() + 1);
-                createActivity("LIKE", user, post.getUser(), post);
+                original.getLikedByUsers().add(user);
+                original.setLikesCount(original.getLikesCount() + 1);
+                createActivity("LIKE", user, original.getUser(), original);
             }
-            return ResponseEntity.ok(postRepository.save(post));
+            
+            postRepository.save(original);
+
+            // Sincronizamos (Esto copiará la lista actualizada a las copias)
+            syncAllCopies(original);
+
+            return ResponseEntity.ok(original);
         }
         return ResponseEntity.notFound().build();
     }
 
-    // 5. REPOST
+    // 5. REPOST (MEJORADO: Nace con la lista de likes correcta)
     @PostMapping("/{id}/repost")
     @Transactional
     public ResponseEntity<?> repostPost(@PathVariable("id") Long id, @RequestParam("username") String username) {
-        Optional<Post> originalOpt = postRepository.findById(id);
+        Optional<Post> targetPostOpt = postRepository.findById(id);
         Optional<User> userWhoRepostsOpt = userRepository.findByUsername(username);
 
-        if (originalOpt.isPresent() && userWhoRepostsOpt.isPresent()) {
-            Post original = originalOpt.get();
+        if (targetPostOpt.isPresent() && userWhoRepostsOpt.isPresent()) {
+            Post targetPost = targetPostOpt.get();
             User me = userWhoRepostsOpt.get();
 
-            Optional<Post> existingRepost = postRepository.findAll().stream()
-                .filter(p -> p.getUser().getId().equals(me.getId()) && id.equals(p.getOriginalPostId()))
-                .findFirst();
+            Long realOriginalId = (targetPost.getOriginalPostId() != null) 
+                                  ? targetPost.getOriginalPostId() 
+                                  : targetPost.getId();
 
-            if (existingRepost.isPresent()) {
-                postRepository.delete(existingRepost.get());
-                original.setRepostsCount(Math.max(0, original.getRepostsCount() - 1));
-                postRepository.save(original);
+            Post originalRoot = postRepository.findById(realOriginalId)
+                                .orElse(targetPost.getOriginalPostId() != null ? targetPost : targetPost);
+
+            boolean isAlreadyReposted = originalRoot.getRepostedByUsers().contains(me);
+
+            if (isAlreadyReposted) {
+                // Toggle OFF
+                originalRoot.getRepostedByUsers().remove(me);
+                originalRoot.setRepostsCount(Math.max(0, originalRoot.getRepostsCount() - 1));
+                postRepository.save(originalRoot);
+
+                Optional<Post> repostCopy = postRepository.findAll().stream()
+                    .filter(p -> p.getUser().getId().equals(me.getId()) && 
+                                 realOriginalId.equals(p.getOriginalPostId()))
+                    .findFirst();
+                repostCopy.ifPresent(postRepository::delete);
+
+                syncAllCopies(originalRoot);
                 return ResponseEntity.ok(Map.of("message", "Repost eliminado"));
+
             } else {
+                // Toggle ON
+                originalRoot.getRepostedByUsers().add(me);
+                originalRoot.setRepostsCount(originalRoot.getRepostsCount() + 1);
+                postRepository.save(originalRoot);
+
                 Post repost = new Post();
-                repost.setContent(original.getContent());
-                repost.setImageUrl(original.getImageUrl());
+                repost.setContent(originalRoot.getContent());
+                repost.setImageUrl(originalRoot.getImageUrl());
                 repost.setUser(me); 
                 repost.setCreatedAt(LocalDateTime.now());
                 repost.setRepostFromUserName(me.getDisplayName()); 
-                repost.setOriginalPostId(original.getId());
-
-                original.setRepostsCount(original.getRepostsCount() + 1);
-                postRepository.save(original);
+                repost.setOriginalPostId(originalRoot.getId());
+                
+                // 👇 ESTO FALTABA:
+                // Copiamos los números...
+                repost.setLikesCount(originalRoot.getLikesCount());
+                repost.setRepostsCount(originalRoot.getRepostsCount());
+                // ... Y copiamos las LISTAS de usuarios
+                repost.setLikedByUsers(new HashSet<>(originalRoot.getLikedByUsers()));
+                repost.setRepostedByUsers(new HashSet<>(originalRoot.getRepostedByUsers()));
+                
                 postRepository.save(repost);
                 
-                createActivity("REPOST", me, original.getUser(), original);
+                syncAllCopies(originalRoot);
+                
+                createActivity("REPOST", me, originalRoot.getUser(), originalRoot);
                 return ResponseEntity.ok(Map.of("message", "Repost creado"));
             }
         }

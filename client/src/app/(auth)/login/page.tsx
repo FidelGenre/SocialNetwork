@@ -6,7 +6,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import api from '@/lib/api'; 
 import { useAuth } from '@/context/AuthContext';
-// 👇 Verifica que esta ruta sea correcta según donde guardaste el componente
 import { ThemeToggle } from '@/context/ThemeToggle'; 
 
 export default function LoginPage() {
@@ -19,26 +18,41 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
     try {
       const response = await api.post('/auth/login', { username, password });
       login(response.data); 
       router.push('/'); 
     } catch (err: any) {
-      setError(err.response?.data || 'Credenciales inválidas');
+      console.error("Error en login:", err);
+      
+      // 👇 AQUÍ ESTÁ LA SOLUCIÓN ANTI-CRASH
+      // Verificamos qué nos devolvió el servidor para extraer solo el texto
+      let errorMsg = 'Credenciales inválidas';
+
+      if (err.response && err.response.data) {
+        const data = err.response.data;
+        if (typeof data === 'string') {
+            errorMsg = data; // Si el backend devuelve texto plano
+        } else if (typeof data === 'object') {
+            // Si devuelve JSON tipo { message: "Error..." } o { error: "Error..." }
+            errorMsg = data.message || data.error || 'Error desconocido';
+        }
+      }
+      
+      setError(errorMsg);
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 relative">
       
-      {/* Botón de tema en la esquina */}
       <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>
 
       <div className="w-full max-w-md bg-feed-bg p-8 rounded-2xl shadow-xl border border-border-color">
         
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <div className="p-3 bg-gray-100 dark:bg-neutral-800 rounded-full">
             <Image 
@@ -56,6 +70,7 @@ export default function LoginPage() {
         
         {error && (
           <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg text-center border border-red-100 dark:border-red-900/30">
+            {/* Ahora estamos seguros de que {error} es un string y no romperá React */}
             {error}
           </div>
         )}
@@ -85,7 +100,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* 👇 BOTÓN PREMIUM (Blanco/Negro) */}
           <button 
             type="submit" 
             className="w-full py-3.5 font-bold rounded-xl transition-transform active:scale-[0.98] mt-4 shadow-lg bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-200"

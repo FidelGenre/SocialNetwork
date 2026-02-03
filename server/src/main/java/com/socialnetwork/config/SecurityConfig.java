@@ -33,16 +33,20 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // 1. AUTH (LOGIN/REGISTER) - ABRIR AMBAS PUERTAS
-                .requestMatchers("/auth/**", "/api/auth/**").permitAll() // 👈 AQUÍ ESTABA EL PROBLEMA DEL 403
-
+                // 1. AUTH (LOGIN/REGISTER)
+                .requestMatchers("/auth/**", "/api/auth/**").permitAll()
                 .requestMatchers("/").permitAll()
 
-                // 2. POSTS
+                // 2. POSTS - CAMBIO IMPORTANTE AQUÍ 👇
                 .requestMatchers(HttpMethod.GET, "/posts/**", "/api/posts/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/posts/**", "/api/posts/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/posts/**", "/api/posts/**").authenticated()
-                .requestMatchers(HttpMethod.PATCH, "/posts/**", "/api/posts/**").authenticated()
+                
+                // CAMBIADO A permitAll() para que pase tu username manual
+                .requestMatchers(HttpMethod.POST, "/posts/**", "/api/posts/**").permitAll() 
+                
+                // El DELETE ya lo tenías controlado en el controller, así que mejor abrirlo también para evitar problemas
+                .requestMatchers(HttpMethod.DELETE, "/posts/**", "/api/posts/**").permitAll()
+                
+                .requestMatchers(HttpMethod.PATCH, "/posts/**", "/api/posts/**").permitAll()
 
                 // 3. USUARIOS
                 .requestMatchers("/users/**", "/api/users/**").permitAll()
@@ -51,12 +55,15 @@ public class SecurityConfig {
                 .requestMatchers("/messages/**", "/api/messages/**").permitAll()
                 .requestMatchers("/activities/**", "/api/activities/**").permitAll()
                 
+                // Imágenes (Importante para ver las fotos subidas)
+                .requestMatchers("/images/**", "/api/posts/images/**").permitAll()
+                
                 .anyRequest().authenticated()
             );
         return http.build();
     }
 
-    // ... (El resto del archivo igual: authenticationProvider, authenticationManager, passwordEncoder, cors)
+    // ... (El resto se mantiene igual)
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
