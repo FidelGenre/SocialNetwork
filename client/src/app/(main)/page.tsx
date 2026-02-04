@@ -17,6 +17,7 @@ interface Post {
   imageUrl?: string;
   repostFromUserName?: string;
   likedByUsers?: { username: string }[];
+  repostedByUsers?: { username: string }[];
   user?: {
     displayName?: string;
     username: string;
@@ -31,19 +32,18 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   const fetchPosts = useCallback(async () => {
-    if (!user && activeTab === 'FOLLOWING') return;
+    if (!user && activeTab === 'FOLLOWING') {
+        setLoading(false);
+        return;
+    }
 
     try {
       setLoading(true);
       let response;
 
       if (activeTab === 'FOLLOWING') {
-        // 1. Endpoint específico para seguidos
-        // NOTA: Tu backend debe tener esta ruta habilitada. 
-        // Si no existe, fallará y mostrará la lista vacía (correcto).
         response = await api.get(`/posts/following/${user?.username}`);
       } else {
-        // 2. Endpoint general (Para ti)
         response = await api.get('/posts');
       }
       
@@ -51,8 +51,6 @@ export default function HomePage() {
 
     } catch (error) {
       console.error("Error cargando el feed:", error);
-      // 3. IMPORTANTE: He quitado el "fallback" que cargaba todos los posts si fallaba.
-      // Si falla, mostramos lista vacía para no confundir al usuario.
       setPosts([]); 
     } finally {
       setLoading(false);
@@ -75,8 +73,11 @@ export default function HomePage() {
   return (
     <div className="w-full min-h-screen pb-20 relative">
       
-      {/* HEADER STICKY */}
-      <header className="sticky top-0 z-50 w-full border-b border-border-color bg-background/85 backdrop-blur-xl transition-all">
+      {/* 🚀 HEADER OPTIMIZADO PARA CAMBIO DE TEMA RÁPIDO 
+          - Se eliminó 'transition-all' (causaba lag con el blur).
+          - Se usa 'transition-colors duration-200' para que el color cambie al instante.
+      */}
+      <header className="sticky top-0 z-50 w-full border-b border-border-color bg-background/85 backdrop-blur-xl">
          <div className="md:hidden flex justify-center pt-2 pb-1">
              <Image src="/assets/766753.png" width={28} height={28} alt="logo" className="dark:invert opacity-80" />
          </div>
@@ -84,25 +85,25 @@ export default function HomePage() {
          <div className="flex justify-around md:justify-center md:gap-20 items-end h-[50px] px-4">
             <button 
               onClick={() => setActiveTab('FOR_YOU')}
-              className={`pb-3 px-4 font-bold text-[15px] transition-colors relative ${
+              className={`pb-3 px-4 font-bold text-[15px] relative ${
                   activeTab === 'FOR_YOU' ? 'text-foreground' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
                Para ti
                {activeTab === 'FOR_YOU' && (
-                   <div className="absolute bottom-0 left-0 w-full h-[1.5px] bg-foreground rounded-full animate-in fade-in zoom-in" />
+                   <div className="absolute bottom-0 left-0 w-full h-[1.5px] bg-foreground rounded-full" />
                )}
             </button>
 
             <button 
               onClick={() => setActiveTab('FOLLOWING')}
-              className={`pb-3 px-4 font-bold text-[15px] transition-colors relative ${
+              className={`pb-3 px-4 font-bold text-[15px] relative ${
                   activeTab === 'FOLLOWING' ? 'text-foreground' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
                Siguiendo
                {activeTab === 'FOLLOWING' && (
-                   <div className="absolute bottom-0 left-0 w-full h-[1.5px] bg-foreground rounded-full animate-in fade-in zoom-in" />
+                   <div className="absolute bottom-0 left-0 w-full h-[1.5px] bg-foreground rounded-full" />
                )}
             </button>
          </div>
@@ -111,12 +112,10 @@ export default function HomePage() {
       {/* CONTENEDOR FEED */}
       <div className="mt-4 mx-0 md:mx-2 rounded-3xl overflow-hidden bg-[var(--feed-bg)] border border-border-color/20 relative z-0 shadow-sm">
           
-          {/* Editor (Solo visible en Para Ti o si quieres postear siempre) */}
           <div className="hidden md:block px-4 py-4 border-b border-border-color/20">
              <PostEditor onPostCreated={fetchPosts} />
           </div>
 
-          {/* Lista de posts */}
           <main className="flex flex-col min-h-[200px]">
             {loading ? (
                  <div className="py-20 flex justify-center">
@@ -127,11 +126,13 @@ export default function HomePage() {
                  </div>
             ) : posts.length > 0 ? (
                  posts.map((post, index) => (
-                     <PostCard 
-                        key={post.id} 
-                        {...post} 
-                        isLast={index === posts.length - 1} 
-                     />
+                     // Usamos el optimizador de renderizado para la lista también
+                     <div key={post.id} className="fast-render-item">
+                         <PostCard 
+                            {...post} 
+                            isLast={index === posts.length - 1} 
+                         />
+                     </div>
                  ))
             ) : (
                  <div className="py-20 text-center text-gray-500 px-6">
@@ -139,7 +140,7 @@ export default function HomePage() {
                         <>
                            <p className="text-lg font-bold mb-2">Aún no sigues a nadie</p>
                            <p className="text-sm mb-4">Sigue a otros usuarios para ver sus publicaciones aquí.</p>
-                           <button onClick={() => setActiveTab('FOR_YOU')} className="text-blue-500 hover:underline text-sm font-semibold">
+                           <button onClick={() => setActiveTab('FOR_YOU')} className="text-gray-500 hover:underline text-sm font-semibold">
                                Ir a Explorar "Para ti"
                            </button>
                         </>
