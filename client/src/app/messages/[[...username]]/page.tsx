@@ -206,7 +206,7 @@ export default function MessagesPage() {
                     <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-[15px] break-words shadow-sm ${
                             isMine 
-                             ? 'bg-blue-600 text-white rounded-tr-sm' 
+                             ? 'bg-gray-600 text-white rounded-tr-sm' 
                              : 'bg-gray-200 dark:bg-[#1e1e1e] text-foreground rounded-tl-sm'
                         }`}>
                             {m.content}
@@ -252,7 +252,7 @@ export default function MessagesPage() {
                   />
 
                   {newMessage.trim() && (
-                      <button type="submit" className="p-2 text-blue-500 font-bold hover:bg-blue-500/10 rounded-full transition-colors">
+                      <button type="submit" className="p-2 text-gray-500 font-bold hover:bg-blue-500/10 rounded-full transition-colors">
                          <span className="text-sm">Enviar</span>
                       </button>
                   )}

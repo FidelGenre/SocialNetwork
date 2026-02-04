@@ -79,7 +79,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPos
         </button>
 
         <div className="flex justify-end mb-6">
-           <span className="text-blue-500 font-bold text-sm">
+           <span className="text-gray-500 font-bold text-sm">
              {replyToPost ? 'Responder' : 'Nuevo hilo'}
            </span>
         </div>
@@ -140,7 +140,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPos
                     />
                     
                     <div className="border-t border-gray-800 mt-4 pt-3 flex justify-between items-center">
-                        <button className="text-blue-500 p-2 hover:bg-blue-500/10 rounded-full transition-colors">
+                        <button className="text-gray-500 p-2 hover:bg-blue-500/10 rounded-full transition-colors">
                             <ImageIcon size={20} />
                         </button>
 
