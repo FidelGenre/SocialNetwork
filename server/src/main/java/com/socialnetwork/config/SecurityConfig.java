@@ -30,36 +30,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests(auth -> auth
-                // 1. AUTH (LOGIN/REGISTER)
-                .requestMatchers("/auth/**", "/api/auth/**").permitAll()
-                .requestMatchers("/").permitAll()
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        // 1. AUTH (LOGIN/REGISTER)
+                        .requestMatchers("/auth/**", "/api/auth/**").permitAll()
+                        .requestMatchers("/").permitAll()
 
-                // 2. POSTS - CAMBIO IMPORTANTE AQUÍ 👇
-                .requestMatchers(HttpMethod.GET, "/posts/**", "/api/posts/**").permitAll()
-                
-                // CAMBIADO A permitAll() para que pase tu username manual
-                .requestMatchers(HttpMethod.POST, "/posts/**", "/api/posts/**").permitAll() 
-                
-                // El DELETE ya lo tenías controlado en el controller, así que mejor abrirlo también para evitar problemas
-                .requestMatchers(HttpMethod.DELETE, "/posts/**", "/api/posts/**").permitAll()
-                
-                .requestMatchers(HttpMethod.PATCH, "/posts/**", "/api/posts/**").permitAll()
+                        // 2. POSTS - CAMBIO IMPORTANTE AQUÍ 👇
+                        .requestMatchers(HttpMethod.GET, "/posts/**", "/api/posts/**").permitAll()
 
-                // 3. USUARIOS
-                .requestMatchers("/users/**", "/api/users/**").permitAll()
+                        // CAMBIADO A permitAll() para que pase tu username manual
+                        .requestMatchers(HttpMethod.POST, "/posts/**", "/api/posts/**").permitAll()
 
-                // 4. MENSAJES Y NOTIFICACIONES
-                .requestMatchers("/messages/**", "/api/messages/**").permitAll()
-                .requestMatchers("/activities/**", "/api/activities/**").permitAll()
-                
-                // Imágenes (Importante para ver las fotos subidas)
-                .requestMatchers("/images/**", "/api/posts/images/**").permitAll()
-                
-                .anyRequest().authenticated()
-            );
+                        // El DELETE ya lo tenías controlado en el controller, así que mejor abrirlo
+                        // también para evitar problemas
+                        .requestMatchers(HttpMethod.DELETE, "/posts/**", "/api/posts/**").permitAll()
+
+                        .requestMatchers(HttpMethod.PATCH, "/posts/**", "/api/posts/**").permitAll()
+
+                        // 3. USUARIOS
+                        .requestMatchers("/users/**", "/api/users/**").permitAll()
+
+                        // 4. MENSAJES Y NOTIFICACIONES
+                        .requestMatchers("/messages/**", "/api/messages/**").permitAll()
+                        .requestMatchers("/activities/**", "/api/activities/**").permitAll()
+
+                        // Imágenes (Importante para ver las fotos subidas)
+                        .requestMatchers("/images/**", "/api/posts/images/**").permitAll()
+
+                        .anyRequest().authenticated());
         return http.build();
     }
 
@@ -79,20 +79,19 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance(); 
+        return NoOpPasswordEncoder.getInstance();
     }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
-            "https://socialnetworkclient-oyjw.onrender.com", 
-            "http://localhost:3000"
-        ));
+                "https://socialnetworkclient-production.up.railway.app",
+                "http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
