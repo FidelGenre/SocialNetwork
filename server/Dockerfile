@@ -1,14 +1,16 @@
-# Paso 1: Construcción (Asegúrate de que este paso también use una imagen válida)
-FROM maven:3.8.5-eclipse-temurin-17 AS build
+# Etapa 1: Build con Maven
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
-COPY . .
+# Copiamos el pom y el código
+COPY pom.xml .
+COPY src ./src
+# Construimos el proyecto saltando los tests para ir más rápido
 RUN mvn clean package -DskipTests
 
-# Paso 2: Ejecución (Aquí es donde fallaba antes)
-FROM eclipse-temurin:17-jre-alpine
+# Etapa 2: Entorno de ejecución (más liviano)
+FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
-# Ajusta el nombre del .jar según el nombre de tu proyecto
+# Copiamos solo el JAR generado en la etapa anterior
 COPY --from=build /app/target/*.jar app.jar
-
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
